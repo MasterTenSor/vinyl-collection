@@ -48,6 +48,7 @@ details.chk{border-radius:14px;background:var(--s1);padding:0 14px}
 details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14px;font-weight:600;color:var(--tx2);cursor:pointer}
 .mono{margin:0;font:12px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--tx2)}
 .vfoot{text-align:center;font-size:12px;color:#6F685E}
+.ver{font-size:12px;font-weight:600;color:#8A8378;margin-right:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .titlerow .subrow{min-width:0;flex-wrap:nowrap;gap:8px}#sub{white-space:nowrap}
 .searchbox{position:relative;display:flex;align-items:center}
@@ -139,6 +140,7 @@ details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14
       <div class="titlerow">
         <div class="subrow"><span id="pill-search"></span><span id="sub" class="small mu"></span></div>
         <div class="hbtns">
+          <span id="ver" class="ver"></span>
           <button id="b-legend" class="iconbtn" aria-label="Show legend" aria-pressed="false">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.1-2.4 3.6"></path><path d="M12 17v.01"></path></svg>
           </button>
@@ -193,6 +195,7 @@ details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14
       </div>
       <div class="sec">
         <div class="sechead"><div class="lab">2 · COLLECTION FOLDERS</div><div id="f-sum" class="small" style="color:var(--tx2);font-weight:500"></div></div>
+        <div id="u-fchg"></div>
         <div id="u-folders"></div>
         <div class="small mu">Folders without a check under In app are not loaded into the app (and are removed from it at the next update). Folders without a check under In search stay in the app, and their hits are one tap away on the search screen. The Wantlist has no folders.</div>
       </div>
@@ -253,7 +256,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
-const VERSION = 'v3';
+const VERSION = 'v1.4';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -410,7 +413,7 @@ let TOKEN = lsGet('dtoken', '');
 let SW_READY = false;
 let busy = false;
 const S = { q: '', mode: lsGet('mode', 'both'), includeInactive: false, view: 'search' };
-let UP = 'new', SET_BAK = null, importArmed = false;
+let UP = 'new', SET_BAK = null, importArmed = false, NEWF = [], GONE = [];
 const srcFor = (t) => PICK[t] || (UP === 'update' ? SRC[t] : null);
 const F = { state: 'idle', msg: '', recent: [], loop: false, errs: 0, wake: null };
 
@@ -569,7 +572,8 @@ function pushRecent(q) {
 let lastQ = null;
 function renderSearch() {
   const tokens = toks(S.q), idle = tokens.length === 0;
-  $('#sub').textContent = META.lastImport ? fmtN(DB.length) + ' records · ' + new Date(META.lastImport).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'No data yet';
+  $('#sub').textContent = META.lastImport ? fmtN(DB.length) + ' records' : 'No data yet';
+  $('#ver').textContent = VERSION;
   $('#clear').hidden = S.q.length === 0;
   $$('.mode').forEach((b) => { const on = b.dataset.mode === S.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   $('#discogs').href = tokens.length ? 'https://www.discogs.com/search/?q=' + encodeURIComponent(S.q.trim()) + '&type=all' : 'https://www.discogs.com/search/';
@@ -609,7 +613,7 @@ function fileCard(label, src, id) {
 }
 function setUP(m) {
   if (m === UP) return;
-  PICK = {}; importArmed = false;
+  PICK = {}; importArmed = false; NEWF = []; GONE = [];
   if (m === 'new') { SET_BAK = SETTINGS; SETTINGS = { folders: {} }; }
   else { if (SET_BAK) SETTINGS = SET_BAK; SET_BAK = null; }
   UP = m; folderCache = { key: null, list: [] };
@@ -635,8 +639,14 @@ function renderUpdate() {
   $('#u-diff').textContent = diffInfo();
   $('#tok-state').textContent = TOKEN ? 'Token saved on this device.' : 'No token. Fetching still works, just slower.';
   if (document.activeElement !== $('#token')) $('#token').value = TOKEN;
-  $('#vfoot').textContent = 'Vinyl Collection ' + VERSION;
+  $('#vfoot').textContent = META.lastImport ? 'Last import ' + fmtDate(META.lastImport) : '';
   const list = folderList(), fs = folderStats();
+  const nm = (a) => a.map((n) => '\u201c' + esc(n) + '\u201d').join(', ');
+  $('#u-fchg').innerHTML = UP === 'update' && PICK.collection
+    ? (NEWF.length || GONE.length
+      ? `<div class="banner"><div><b>Folders changed</b>${NEWF.length ? `<div>New: ${nm(NEWF)}. They are switched on; untick them below if you do not want them.</div>` : ''}${GONE.length ? `<div>No longer in your collection: ${nm(GONE)}. Their records are removed on update.</div>` : ''}</div></div>`
+      : '<div class="small" style="color:var(--gr);font-weight:500">Folders checked: none added, none removed.</div>')
+    : '';
   $('#f-sum').textContent = list.length ? fs.app + ' in app \u00b7 ' + fs.search + ' in search' : '';
   if (!list.length) {
     $('#u-folders').innerHTML = '<div class="card small mu">Choose the Collection CSV to see your folders.</div>';
@@ -644,7 +654,7 @@ function renderUpdate() {
     $('#u-folders').innerHTML = `<div class="ftable"><div class="fhead"><div style="flex:1">Folder</div><div style="width:72px;text-align:center">In app</div><div style="width:72px;text-align:center">In search</div></div>${list.map((f, i) => {
       const s = SETTINGS.folders[f.name] || { inApp: true, inSearch: true };
       const rm = UP === 'update' && !s.inApp && folderInDB(f.name);
-      return `<div class="frow"><div class="fn"><div style="font-size:15px;font-weight:500;line-height:1.25;overflow-wrap:anywhere">${esc(f.name)}</div><div class="small mu">${fmtN(f.count)} ${f.count === 1 ? 'record' : 'records'}</div>${rm ? '<div class="rm">Removed from the app on update</div>' : ''}</div><label class="cbx a"><input type="checkbox" data-fi="${i}" data-k="app" ${s.inApp ? 'checked' : ''} aria-label="${esc(f.name)}: include in app"></label><label class="cbx s"><input type="checkbox" data-fi="${i}" data-k="search" ${s.inApp && s.inSearch ? 'checked' : ''} ${s.inApp ? '' : 'disabled'} aria-label="${esc(f.name)}: include in search"></label></div>`;
+      return `<div class="frow"><div class="fn"><div style="font-size:15px;font-weight:500;line-height:1.25;overflow-wrap:anywhere">${esc(f.name)}</div><div class="small mu">${fmtN(f.count)} ${f.count === 1 ? 'record' : 'records'}</div>${rm ? '<div class="rm">Removed from the app on update</div>' : ''}${UP === 'update' && NEWF.indexOf(f.name) >= 0 ? '<div class="rm" style="color:var(--gr)">New folder</div>' : ''}</div><label class="cbx a"><input type="checkbox" data-fi="${i}" data-k="app" ${s.inApp ? 'checked' : ''} aria-label="${esc(f.name)}: include in app"></label><label class="cbx s"><input type="checkbox" data-fi="${i}" data-k="search" ${s.inApp && s.inSearch ? 'checked' : ''} ${s.inApp ? '' : 'disabled'} aria-label="${esc(f.name)}: include in search"></label></div>`;
     }).join('')}</div>`;
   }
   const hasSrc = !!(col || want), online = navigator.onLine !== false;
@@ -659,7 +669,13 @@ async function onPick(file) {
   try {
     const src = readSource(file.name, await file.text());
     PICK[src.type] = src;
-    if (src.type === 'collection') ensureFolderSettings();
+    if (src.type === 'collection') {
+      if (UP === 'update') {
+        const known = Object.keys(SETTINGS.folders), fresh = folderList().map((f) => f.name);
+        NEWF = fresh.filter((n) => known.indexOf(n) < 0); GONE = known.filter((n) => fresh.indexOf(n) < 0);
+      } else { NEWF = []; GONE = []; }
+      ensureFolderSettings();
+    }
     renderUpdate();
   } catch (e) {
     $('#import-note').textContent = 'Could not read ' + file.name + ': ' + e.message;
@@ -672,6 +688,7 @@ async function doImport() {
   const wasNew = UP === 'new';
   try {
     const src = { collection: srcFor('collection'), wantlist: srcFor('wantlist') };
+    GONE.forEach((n) => { delete SETTINGS.folders[n]; }); NEWF = []; GONE = [];
     SRC = src; PICK = {}; SET_BAK = null; UP = 'update';
     ensureFolderSettings();
     await metaSet('src', src); await metaSet('settings', SETTINGS);

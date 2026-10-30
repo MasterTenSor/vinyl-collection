@@ -13,7 +13,7 @@ De app moet via https draaien, anders werkt offline niet. GitHub Pages is hiervo
 1. Ga op github.com naar **New repository**, noem het bv. `vinyl-collection`, zet het op **Public**, klik **Create repository**.
 2. Klik **uploading an existing file** en sleep ALLE bestanden uit deze map erin (niet de map zelf). Klik **Commit changes**.
 3. Ga naar **Settings → Pages**. Kies bij *Source* **Deploy from a branch**, branch **main**, map **/ (root)**, en klik **Save**.
-4. Na 1 à 2 minuten staat de app op `https://JOUWNAAM.github.io/vinyl-collection/`.
+4. Na 1 à 2 minuten staat de app op `https://MasterTensor.github.io/vinyl-collection/`.
 5. Open die link in **Safari op je iPhone** (met internet). Tik op **Delen → Zet op beginscherm**.
 6. Open de app vanaf het beginscherm. Tik rechtsboven op het vernieuw-icoon (**Update**).
 7. Kies de twee CSV's via de Files-app (Google Drive), controleer de mappen, en tik **Import and fetch tracklists**.
@@ -31,4 +31,4 @@ Plak je personal access token op het Update-scherm. Met token 60 aanvragen per m
 - Of de data bewaard blijft na dagen niet gebruiken (de app vraagt iOS om persistente opslag).
 
 ## Belangrijk: verwijder de app niet
-Op iPhone heeft de app op het beginscherm een eigen, aparte opslag (los van Safari). Verwijder je de app, dan is de database weg. Een nieuwe versie van de app komt vanzelf binnen: upload de nieuwe bestanden en open de app twee keer. Onderaan het Update-scherm staat het versienummer (nu v3).
+Op iPhone heeft de app op het beginscherm een eigen, aparte opslag (los van Safari). Verwijder je de app, dan is de database weg. Een nieuwe versie van de app komt vanzelf binnen: upload de nieuwe bestanden en open de app twee keer. Rechtsboven in het zoekscherm staat het versienummer (nu v1.4).
