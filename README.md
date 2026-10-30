@@ -24,11 +24,11 @@ De app moet via https draaien, anders werkt offline niet. GitHub Pages is hiervo
 Exporteer nieuwe CSV's uit Discogs, ga naar **Update**, kies de bestanden en tik op import. Alleen nieuwe records halen een tracklist op.
 
 ## Discogs-token (optioneel)
-Plak je personal access token op het Update-scherm. Met token 60 aanvragen per minuut, zonder 25.
+Plak je personal access token op het Update-scherm en tik op **Test** om te controleren of hij werkt; daarna **Save**. Met token 60 aanvragen per minuut, zonder 25.
 
 ## Nog te testen op je iPhone
 - Of een tik op het icoon het Discogs-app opent of Safari.
 - Of de data bewaard blijft na dagen niet gebruiken (de app vraagt iOS om persistente opslag).
 
 ## Belangrijk: verwijder de app niet
-Op iPhone heeft de app op het beginscherm een eigen, aparte opslag (los van Safari). Verwijder je de app, dan is de database weg. Een nieuwe versie van de app komt vanzelf binnen: upload de nieuwe bestanden en open de app twee keer. Rechtsboven in het zoekscherm staat het versienummer (nu v1.5).
+Op iPhone heeft de app op het beginscherm een eigen, aparte opslag (los van Safari). Verwijder je de app, dan is de database weg. Een nieuwe versie van de app komt vanzelf binnen: upload de nieuwe bestanden en open de app twee keer. Rechtsboven in het zoekscherm staat het versienummer (nu v1.6).
