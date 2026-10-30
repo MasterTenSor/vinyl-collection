@@ -53,6 +53,7 @@ details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14
 .tk{display:flex;gap:6px;align-items:flex-start;font-size:14px;line-height:1.3;color:var(--tx2)}
 .tk svg{flex:none;margin-top:2px;width:13px;height:13px}
 .tk .ta{color:var(--mu)}
+.tk.hit{color:var(--tx);font-weight:600}
 .tog{align-self:flex-start;min-height:40px;margin-top:-4px;background:none;border:0;padding:6px 0;color:var(--mu);font-size:13px;font-weight:600;text-align:left}
 #fhint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #count{flex:none;white-space:nowrap}
@@ -263,7 +264,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
-const VERSION = 'v1.9';
+const VERSION = 'v1.10';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -538,14 +539,19 @@ function runSearch(tokens) {
     if (inactive) shownInactive++;
     const state = r.inC && r.inW ? 'both' : (r.inC ? 'collection' : 'want');
     const listName = state === 'both' ? 'in Collection and Wantlist' : (state === 'collection' ? 'in Collection' : 'in Wantlist');
-    const rel = rows[0].rel, tracks = rows[0].t ? rows.map((m) => ({ t: m.t.t, who: /^various/i.test(r.artist) && m.t.a ? m.t.a : '' })) : [];
-    /* pre = how many tracks are visible without tapping */
-    const pre = rel ? (FIXED[r.kind] ? tracks.length : 0) : 4;
-    tracksTotal += tracks.length || 1;
+    const rel = rows[0].rel;
+    let tracks = [];
+    if (rows[0].t) {
+      const mset = new Set(rel ? [] : rows.map((m) => m.ti));
+      if (rel) r.tracks.forEach((t, i) => { if (tokens.every((tk) => tokOk(tk, t.h, t.w, fuzzy))) mset.add(i); });
+      tracks = r.tracks.map((t, i) => ({ t: t.t, who: /^various/i.test(r.artist) && t.a ? t.a : '', m: mset.has(i) }));
+    }
+    const mode = rel ? (FIXED[r.kind] ? 'fixed' : 'rel') : 'hit';
+    tracksTotal += rel ? (tracks.length || 1) : rows.length;
     items.push({
       id: r.id, kind: r.kind, state, title: r.title,
       artist: r.artist + (inactive ? ' \u00b7 ' + r.folders[0] : ''),
-      tracks, pre, rel, note: r.inW ? r.note : '', url: r.url,
+      tracks, mode, rel, note: r.inW ? r.note : '', url: r.url,
       aria: 'Open on Discogs: ' + r.title + ', ' + CAT[r.kind] + ', ' + listName,
       score: scoreOf(rows[0], tokens, fuzzy), ix: r.ix
     });
@@ -583,11 +589,12 @@ function helpHTML() {
   return `<div class="card" style="margin-bottom:16px"><div class="lab">SEARCH</div><div class="small" style="color:var(--tx2)">Type any part of an artist, title or track. Small typing mistakes are forgiven. Results are found offline.</div></div><div class="card"><div class="lab">LIST</div><div class="legendgrid3">${LEGEND_STATES.map((s) => `<div>${iconHTML('album', s[0], 30)}<div class="lt" style="font-size:13px">${s[1]}</div><div class="ls">${s[2]}</div></div>`).join('')}</div><div class="lab">TYPE</div><div class="legendgrid2">${LEGEND_KINDS.map((k) => `<div>${iconHTML(k[0], 'plain', 28)}<div style="min-width:0"><div class="lt">${k[1]}</div><div class="ls">${k[2]}</div></div></div>`).join('')}</div><div class="small mu">Tap an icon in a result to open that release on Discogs.</div></div>`;
 }
 function rowHTML(g) {
-  const open = S.open.has(g.id), n = g.tracks.length;
-  const shown = open ? g.tracks : g.tracks.slice(0, g.pre);
-  const tl = shown.length ? `<div class="tl">${shown.map((t) => `<div class="tk">${NOTE_SVG}<div>${esc(t.t)}${t.who ? ` <span class="ta">\u2013 ${esc(t.who)}</span>` : ''}</div></div>`).join('')}</div>` : '';
+  const open = S.open.has(g.id), all = g.tracks, n = all.length;
+  const matched = all.filter((t) => t.m);
+  const vis = (open || g.mode === 'fixed') ? all : (g.mode === 'rel' ? matched : matched.slice(0, 4));
+  const tl = vis.length ? `<div class="tl">${vis.map((t) => `<div class="tk${open && g.mode !== 'fixed' && t.m ? ' hit' : ''}">${NOTE_SVG}<div>${esc(t.t)}${t.who ? ` <span class="ta">\u2013 ${esc(t.who)}</span>` : ''}</div></div>`).join('')}</div>` : '';
   let tog = '';
-  if (n > g.pre) tog = `<button class="tog" data-open="${g.id}" aria-expanded="${open}">${open ? 'Show less \u25B4' : (g.pre === 0 ? n + (n === 1 ? ' track' : ' tracks') + ' \u25BE' : '+' + (n - g.pre) + ' more \u25BE')}</button>`;
+  if (g.mode !== 'fixed' && (open || n > vis.length)) tog = `<button class="tog" data-open="${g.id}" aria-expanded="${open}">${open ? 'Show less \u25B4' : (vis.length === 0 ? n + (n === 1 ? ' track' : ' tracks') : 'All ' + n + ' tracks') + ' \u25BE'}</button>`;
   return `<div class="row"><div class="rb"><div class="t clamp2">${esc(g.title)}</div><div class="r2 clamp2">${esc(g.artist)}</div>${tl}${tog}${g.note ? `<div class="note clamp2">Note: ${esc(g.note)}</div>` : ''}</div><a class="ic" href="${esc(g.url)}" target="_blank" rel="noopener" aria-label="${esc(g.aria)}">${iconHTML(g.kind, g.state, 30)}</a></div>`;
 }
 function recents() { try { return JSON.parse(lsGet('recents', '[]')); } catch (e) { return []; } }
