@@ -256,7 +256,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
-const VERSION = 'v1.7';
+const VERSION = 'v1.8';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -348,9 +348,10 @@ function classify(fmt, artist) {
   if (has(/^CDr?$/i)) return has(/^(Single|Maxi)$/i) ? 'singlecd' : 'cd';
   if (has(/^(Cass|File|Acetate|Lathe Cut|Lathe|DVD|DVDr|VHS|MiniDisc|8-Track Cartridge|Reel-To-Reel|Cylinder|DAT|Memory Stick)/i)) return 'other';
   if (/^various/i.test(String(artist || ''))) return 'comp';
-  if (has(/^(LP|EP|Album|Mini-Album|Comp)$/i) || has(/Album/i)) return 'album';
+  if (has(/^(LP|Album|Mini-Album|Comp)$/i) || has(/Album/i)) return 'album';
   if (has(/^7"$/)) return 'single';
   if (has(/^(12|10)"$/)) return 'maxi';
+  if (has(/^EP$/i)) return 'album';
   return 'other';
 }
 const CAT = { single: 'Single', maxi: 'Maxi-single', album: 'Album', comp: 'Compilation', cd: 'CD', singlecd: 'Single CD', other: 'Other' };
@@ -521,8 +522,7 @@ function runSearch(tokens) {
     }
   };
   collect(false);
-  const visible = () => groups.reduce((n, g) => n + (S.includeInactive || !isInactive(g.rows[0].r) ? g.rows.length : 0), 0);
-  if (visible() < 6 && tokens.some((t) => t.length >= 4)) collect(true);
+  if (groups.length === 0 && tokens.some((t) => t.length >= 4)) collect(true);
   let hidden = 0, shownInactive = 0; const items = [];
   for (const { rows, fuzzy } of groups) {
     const r = rows[0].r, inactive = isInactive(r);
@@ -571,7 +571,7 @@ function renderPills() {
 
 /* ---------- search view ---------- */
 const LEGEND_STATES = [['collection', 'Collection', 'filled'], ['want', 'Wantlist', 'outline'], ['both', 'In both', 'dot']];
-const LEGEND_KINDS = [['single', 'Single', '7 inch'], ['maxi', 'Maxi-single', '10 or 12 inch'], ['album', 'Album', 'LP, EP, best-of'], ['comp', 'Compilation', 'Various artists'], ['cd', 'CD', 'Album or compilation'], ['singlecd', 'Single CD', 'Single or maxi'], ['other', 'Other', 'Cassette, acetate, file']];
+const LEGEND_KINDS = [['single', 'Single', '7 inch'], ['maxi', 'Maxi-single', '10 or 12 inch'], ['album', 'Album', 'LP, album, best-of'], ['comp', 'Compilation', 'Various artists'], ['cd', 'CD', 'Album or compilation'], ['singlecd', 'Single CD', 'Single or maxi'], ['other', 'Other', 'Cassette, acetate, file']];
 function helpHTML() {
   return `<div class="card" style="margin-bottom:16px"><div class="lab">SEARCH</div><div class="small" style="color:var(--tx2)">Type any part of an artist, title or track. Small typing mistakes are forgiven. Results are found offline.</div></div><div class="card"><div class="lab">LIST</div><div class="legendgrid3">${LEGEND_STATES.map((s) => `<div>${iconHTML('album', s[0], 30)}<div class="lt" style="font-size:13px">${s[1]}</div><div class="ls">${s[2]}</div></div>`).join('')}</div><div class="lab">TYPE</div><div class="legendgrid2">${LEGEND_KINDS.map((k) => `<div>${iconHTML(k[0], 'plain', 28)}<div style="min-width:0"><div class="lt">${k[1]}</div><div class="ls">${k[2]}</div></div></div>`).join('')}</div><div class="small mu">Tap an icon in a result to open that release on Discogs.</div></div>`;
 }
