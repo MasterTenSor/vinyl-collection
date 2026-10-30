@@ -256,7 +256,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
-const VERSION = 'v1.6';
+const VERSION = 'v1.7';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -409,6 +409,7 @@ async function metaSet(k, v) { const t = IDB.transaction('meta', 'readwrite'); t
 
 /* ---------- state ---------- */
 let DB = [];                         // hydrated records
+let BYID = new Map();
 let SRC = { collection: null, wantlist: null };   // stored CSV sources
 let PICK = {};                       // newly chosen, not imported yet
 let SETTINGS = { folders: {} };      // folder flags
@@ -437,6 +438,7 @@ async function loadDB() {
   DB = recs.map((r) => hydrate(r, tm.get(r.id)));
   DB.sort((a, b) => (a.h < b.h ? -1 : a.h > b.h ? 1 : 0));
   DB.forEach((r, i) => { r.ix = i; });
+  BYID = new Map(DB.map((r) => [r.id, r]));
   F.recent = DB.filter((r) => r.done && r.trkAt).sort((a, b) => b.trkAt - a.trkAt).slice(0, 3).map((r) => ({ artist: r.artist, title: r.title }));
 }
 const pendingCount = () => { let n = 0; for (const r of DB) if (!r.done) n++; return n; };
@@ -553,10 +555,12 @@ function statusInfo() {
   if (!SW_READY) return { ok: false, text: 'Offline', aria: 'Offline not ready: the app is not cached yet' };
   return { ok: true, text: 'Offline', aria: 'Offline ready. Open update' };
 }
+const CHEV = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:-1px"><path d="M9 6l6 6-6 6"></path></svg>';
 function pillHTML(link) {
   const s = statusInfo(), cls = 'pill ' + (s.ok ? 'ok' : 'bad'), inner = (s.ok ? CHECK : ALERT) + esc(s.text);
+  const target = DB.length && pendingCount() > 0 ? 'progress' : 'update';
   return link
-    ? `<a class="pillwrap" href="#update" data-go="update" aria-label="${esc(s.aria)}"><span class="${cls}">${inner}</span></a>`
+    ? `<a class="pillwrap" href="#${target}" data-go="${target}" aria-label="${esc(s.aria.replace('Open update', 'Open ' + target))}"><span class="${cls}">${inner}${CHEV}</span></a>`
     : `<span class="pillwrap"><span class="${cls}" role="status" aria-label="${esc(s.aria)}">${inner}</span></span>`;
 }
 function renderPills() {
@@ -670,10 +674,10 @@ function renderUpdate() {
   }
   const hasSrc = !!(col || want), online = navigator.onLine !== false;
   const b = $('#b-import');
-  b.disabled = !hasSrc || !online || busy;
-  b.textContent = busy ? 'Importing\u2026' : !hasSrc ? 'Choose the CSV files first'
+  b.disabled = !hasSrc || !online || busy || F.loop;
+  b.textContent = busy ? 'Importing\u2026' : F.loop ? 'Fetching tracklists\u2026' : !hasSrc ? 'Choose the CSV files first'
     : (UP === 'new' ? (hasData ? (importArmed ? 'Tap again to replace the current collection' : 'Import new collection') : 'Import and fetch tracklists') : 'Update and fetch new tracklists');
-  $('#import-note').textContent = !online ? 'No internet connection. Connect to Wi-Fi or mobile data to update.' : (UP === 'new' && hasData ? 'The current collection in the app will be replaced.' : 'Only new records are fetched. What is already in the app is kept.');
+  $('#import-note').textContent = F.loop ? 'Tracklists are being fetched. Pause first (tap the red pill, then Pause) to import a new CSV.' : !online ? 'No internet connection. Connect to Wi-Fi or mobile data to update.' : (UP === 'new' && hasData ? 'The current collection in the app will be replaced.' : 'Only new records are fetched. What is already in the app is kept.');
 }
 
 async function onPick(file) {
@@ -693,7 +697,7 @@ async function onPick(file) {
   }
 }
 async function doImport() {
-  if (busy) return;
+  if (busy || F.loop) return;
   if (UP === 'new' && DB.length && !importArmed) { importArmed = true; renderUpdate(); setTimeout(() => { importArmed = false; if (S.view === 'update') renderUpdate(); }, 5000); return; }
   importArmed = false; busy = true; renderUpdate();
   const wasNew = UP === 'new';
@@ -756,8 +760,8 @@ async function startFetch() {
   let qi = 0;
   try {
     while (F.state === 'running' && qi < queue.length) {
-      const r = queue[qi];
-      if (r.done) { qi++; continue; }
+      const r = BYID.get(queue[qi].id);
+      if (!r || r.done) { qi++; continue; }
       let res;
       try {
         res = await fetch('https://api.discogs.com/releases/' + r.id + (TOKEN ? '?token=' + encodeURIComponent(TOKEN) : ''));
