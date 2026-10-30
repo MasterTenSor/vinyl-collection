@@ -1,5 +1,5 @@
 /* Vinyl Collection service worker: the app shell is cached so the app opens and searches without internet. */
-const CACHE = 'vinyl-collection-v1';
+const CACHE = 'vinyl-collection-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {

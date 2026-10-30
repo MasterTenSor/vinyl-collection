@@ -29,7 +29,7 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
 .mu{color:var(--mu)}
 .small{font-size:13px;line-height:1.4}
 .lab{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--mu);line-height:1}
-.head{padding:14px 16px 4px}
+.head{padding:6px 8px 0 16px;flex:none}
 .titlerow{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .hbtns{display:flex;align-items:center}
 .iconbtn{width:44px;height:44px;border:0;border-radius:22px;background:transparent;color:var(--tx2);display:flex;align-items:center;justify-content:center}
@@ -38,7 +38,9 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
 .pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:16px;font-size:13px;font-weight:600;line-height:1}
 .pill.ok{background:#17301D;color:var(--gr)}
 .pill.bad{background:#3A1717;color:var(--rd)}
-.controls{padding:0 16px 10px;display:flex;flex-direction:column;gap:10px}
+.controls{padding:10px 16px 10px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);background:var(--bg);flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.titlerow .subrow{min-width:0;flex-wrap:nowrap;gap:8px}#sub{white-space:nowrap}
 .searchbox{position:relative;display:flex;align-items:center}
 .searchbox>svg{position:absolute;left:16px;pointer-events:none}
 #q{width:100%;height:52px;border-radius:14px;border:1px solid var(--bd);background:var(--s1);color:var(--tx);font-size:17px;font-weight:500;padding:0 48px 0 46px;-webkit-appearance:none;appearance:none}
@@ -51,9 +53,9 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
 .mode.both{border-color:var(--tx);color:var(--tx)}.mode.both.on{background:var(--tx);color:#14120F}
 .dbtn{flex:none;width:84px;height:44px;margin-left:8px;border-radius:12px;border:1.5px solid var(--ye);color:var(--ye);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px}
 .hint{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:500;color:var(--mu);min-height:16px}
-.resultswrap{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px;display:flex;flex-direction:column;gap:12px}
+.resultswrap{flex:1;min-height:0;overflow-y:auto;padding-top:8px !important;-webkit-overflow-scrolling:touch;padding:0 16px 24px;display:flex;flex-direction:column;gap:12px}
 .list{display:flex;flex-direction:column;gap:1px;border-radius:14px;overflow:hidden;background:var(--line);flex:none}
-.row{display:flex;align-items:center;gap:6px;padding:6px 14px 6px 6px;background:var(--s1);min-height:60px}
+.row{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 14px;background:var(--s1);min-height:60px}
 .ic{flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
 .ico{position:relative;display:block;flex:none}
 .ico svg{display:block}
@@ -124,8 +126,9 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
 
   <section id="v-search" class="view active" aria-label="Search">
     <div class="head">
+      <h1 class="sr">Vinyl Collection</h1>
       <div class="titlerow">
-        <h1>Vinyl Collection</h1>
+        <div class="subrow"><span id="pill-search"></span><span id="sub" class="small mu"></span></div>
         <div class="hbtns">
           <button id="b-legend" class="iconbtn" aria-label="Show legend" aria-pressed="false">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.1-2.4 3.6"></path><path d="M12 17v.01"></path></svg>
@@ -135,16 +138,10 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
           </a>
         </div>
       </div>
-      <div class="subrow"><span id="pill-search"></span><span id="sub" class="small mu"></span></div>
     </div>
+    <div id="results" class="resultswrap"></div>
     <div class="controls">
-      <div class="searchbox">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9A196" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
-        <input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search artist, title or track" placeholder="Artist, title or track">
-        <button id="clear" class="clear" aria-label="Clear search" hidden>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
-        </button>
-      </div>
+      <div class="hint"><span id="count"></span><span id="fhint"></span></div>
       <div class="modes">
         <button class="mode col" data-mode="collection" aria-pressed="false">Collection</button>
         <button class="mode want" data-mode="wantlist" aria-pressed="false">Wantlist</button>
@@ -153,9 +150,14 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg>
         </a>
       </div>
-      <div class="hint"><span id="count"></span><span id="fhint"></span></div>
+      <div class="searchbox">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9A196" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search artist, title or track" placeholder="Artist, title or track">
+        <button id="clear" class="clear" aria-label="Clear search" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
     </div>
-    <div id="results" class="resultswrap"></div>
   </section>
 
   <section id="v-update" class="view" aria-label="Update">
@@ -527,7 +529,7 @@ function legendHTML() {
   return `<div class="card"><div class="lab">LIST</div><div class="legendgrid3">${LEGEND_STATES.map((s) => `<div>${iconHTML('album', s[0], 30)}<div class="lt" style="font-size:13px">${s[1]}</div><div class="ls">${s[2]}</div></div>`).join('')}</div><div class="lab">TYPE</div><div class="legendgrid2">${LEGEND_KINDS.map((k) => `<div>${iconHTML(k[0], 'plain', 28)}<div style="min-width:0"><div class="lt">${k[1]}</div><div class="ls">${k[2]}</div></div></div>`).join('')}</div><div class="small mu">Tap an icon in a result to open that release on Discogs.</div></div>`;
 }
 function rowHTML(x) {
-  return `<div class="row"><a class="ic" href="${esc(x.url)}" target="_blank" rel="noopener" aria-label="${esc(x.aria)}">${iconHTML(x.kind, x.state, 30)}</a><div class="rb"><div class="r1">${x.isTrack ? NOTE_SVG : ''}<div class="t clamp2">${esc(x.primary)}</div></div><div class="r2 clamp2">${esc(x.secondary)}</div>${x.release ? `<div class="r2 clamp2">on <span class="rel">${esc(x.release)}</span></div>` : ''}${x.note ? `<div class="note clamp2">Note: ${esc(x.note)}</div>` : ''}</div></div>`;
+  return `<div class="row"><div class="rb"><div class="r1">${x.isTrack ? NOTE_SVG : ''}<div class="t clamp2">${esc(x.primary)}</div></div><div class="r2 clamp2">${esc(x.secondary)}</div>${x.release ? `<div class="r2 clamp2">on <span class="rel">${esc(x.release)}</span></div>` : ''}${x.note ? `<div class="note clamp2">Note: ${esc(x.note)}</div>` : ''}</div><a class="ic" href="${esc(x.url)}" target="_blank" rel="noopener" aria-label="${esc(x.aria)}">${iconHTML(x.kind, x.state, 30)}</a></div>`;
 }
 function recents() { try { return JSON.parse(lsGet('recents', '[]')); } catch (e) { return []; } }
 function pushRecent(q) {
@@ -537,7 +539,7 @@ function pushRecent(q) {
 let lastQ = null;
 function renderSearch() {
   const tokens = toks(S.q), idle = tokens.length === 0;
-  $('#sub').textContent = META.lastImport ? 'Updated ' + fmtDate(META.lastImport) + ' · ' + fmtN(DB.length) + ' records' : 'No data yet';
+  $('#sub').textContent = META.lastImport ? fmtN(DB.length) + ' records · ' + new Date(META.lastImport).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'No data yet';
   $('#clear').hidden = S.q.length === 0;
   $$('.mode').forEach((b) => { const on = b.dataset.mode === S.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   $('#b-legend').setAttribute('aria-pressed', S.legend);
@@ -770,6 +772,11 @@ $('#b-fetch').addEventListener('click', () => {
   else if (a === 'resume') startFetch();
   else go(a === 'update' ? 'update' : 'search');
 });
+if (window.visualViewport) {
+  const fit = () => { $('#app').style.height = window.visualViewport.height + 'px'; window.scrollTo(0, 0); };
+  window.visualViewport.addEventListener('resize', fit);
+  window.visualViewport.addEventListener('scroll', () => window.scrollTo(0, 0));
+}
 window.addEventListener('online', renderAll);
 window.addEventListener('offline', renderAll);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && F.state === 'running') lockScreen(); });
