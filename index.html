@@ -49,6 +49,13 @@ details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14
 .mono{margin:0;font:12px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--tx2)}
 .vfoot{text-align:center;font-size:12px;color:#6F685E}
 .ver{font-size:12px;font-weight:600;color:#8A8378;margin-right:2px}
+.tl{display:flex;flex-direction:column;gap:3px;margin-top:3px}
+.tk{display:flex;gap:6px;align-items:flex-start;font-size:14px;line-height:1.3;color:var(--tx2)}
+.tk svg{flex:none;margin-top:2px;width:13px;height:13px}
+.tk .ta{color:var(--mu)}
+.tog{align-self:flex-start;min-height:40px;margin-top:-4px;background:none;border:0;padding:6px 0;color:var(--mu);font-size:13px;font-weight:600;text-align:left}
+#fhint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#count{flex:none;white-space:nowrap}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .titlerow .subrow{min-width:0;flex-wrap:nowrap;gap:8px}#sub{white-space:nowrap}
 .searchbox{position:relative;display:flex;align-items:center}
@@ -256,7 +263,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
-const VERSION = 'v1.8';
+const VERSION = 'v1.9';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -418,7 +425,7 @@ let META = { lastImport: 0 };
 let TOKEN = lsGet('dtoken', '');
 let SW_READY = false;
 let busy = false;
-const S = { q: '', mode: lsGet('mode', 'both'), includeInactive: false, view: 'search' };
+const S = { q: '', mode: lsGet('mode', 'both'), includeInactive: false, view: 'search', open: new Set() };
 let UP = 'new', SET_BAK = null, importArmed = false, NEWF = [], GONE = [];
 const srcFor = (t) => PICK[t] || (UP === 'update' ? SRC[t] : null);
 const F = { state: 'idle', msg: '', recent: [], loop: false, errs: 0, wake: null };
@@ -523,28 +530,28 @@ function runSearch(tokens) {
   };
   collect(false);
   if (groups.length === 0 && tokens.some((t) => t.length >= 4)) collect(true);
-  let hidden = 0, shownInactive = 0; const items = [];
+  let hidden = 0, shownInactive = 0, tracksTotal = 0; const items = [];
+  const FIXED = { single: 1, maxi: 1, singlecd: 1 };
   for (const { rows, fuzzy } of groups) {
     const r = rows[0].r, inactive = isInactive(r);
-    if (inactive && !S.includeInactive) { hidden += rows.length; continue; }
-    if (inactive) shownInactive += rows.length;
+    if (inactive && !S.includeInactive) { hidden++; continue; }
+    if (inactive) shownInactive++;
     const state = r.inC && r.inW ? 'both' : (r.inC ? 'collection' : 'want');
     const listName = state === 'both' ? 'in Collection and Wantlist' : (state === 'collection' ? 'in Collection' : 'in Wantlist');
-    for (const m of rows) {
-      const t = m.t, primary = t ? t.t : r.title;
-      const who = t && t.a && /^various/i.test(r.artist) ? t.a : r.artist;
-      items.push({
-        kind: r.kind, state, primary, isTrack: !m.rel,
-        secondary: who + (inactive ? ' \u00b7 ' + r.folders[0] : ''),
-        release: t && SHOW_RELEASE[r.kind] ? r.title : '',
-        note: r.inW ? r.note : '', url: r.url,
-        aria: 'Open on Discogs: ' + primary + ', ' + CAT[r.kind] + ', ' + listName,
-        score: scoreOf(m, tokens, fuzzy), ix: r.ix, ti: m.ti
-      });
-    }
+    const rel = rows[0].rel, tracks = rows[0].t ? rows.map((m) => ({ t: m.t.t, who: /^various/i.test(r.artist) && m.t.a ? m.t.a : '' })) : [];
+    /* pre = how many tracks are visible without tapping */
+    const pre = rel ? (FIXED[r.kind] ? tracks.length : 0) : 4;
+    tracksTotal += tracks.length || 1;
+    items.push({
+      id: r.id, kind: r.kind, state, title: r.title,
+      artist: r.artist + (inactive ? ' \u00b7 ' + r.folders[0] : ''),
+      tracks, pre, rel, note: r.inW ? r.note : '', url: r.url,
+      aria: 'Open on Discogs: ' + r.title + ', ' + CAT[r.kind] + ', ' + listName,
+      score: scoreOf(rows[0], tokens, fuzzy), ix: r.ix
+    });
   }
-  items.sort((a, b) => b.score - a.score || a.ix - b.ix || a.ti - b.ti);
-  return { items, hidden, shownInactive };
+  items.sort((a, b) => b.score - a.score || a.ix - b.ix);
+  return { items, hidden, shownInactive, tracksTotal };
 }
 
 /* ---------- status pill ---------- */
@@ -575,8 +582,13 @@ const LEGEND_KINDS = [['single', 'Single', '7 inch'], ['maxi', 'Maxi-single', '1
 function helpHTML() {
   return `<div class="card" style="margin-bottom:16px"><div class="lab">SEARCH</div><div class="small" style="color:var(--tx2)">Type any part of an artist, title or track. Small typing mistakes are forgiven. Results are found offline.</div></div><div class="card"><div class="lab">LIST</div><div class="legendgrid3">${LEGEND_STATES.map((s) => `<div>${iconHTML('album', s[0], 30)}<div class="lt" style="font-size:13px">${s[1]}</div><div class="ls">${s[2]}</div></div>`).join('')}</div><div class="lab">TYPE</div><div class="legendgrid2">${LEGEND_KINDS.map((k) => `<div>${iconHTML(k[0], 'plain', 28)}<div style="min-width:0"><div class="lt">${k[1]}</div><div class="ls">${k[2]}</div></div></div>`).join('')}</div><div class="small mu">Tap an icon in a result to open that release on Discogs.</div></div>`;
 }
-function rowHTML(x) {
-  return `<div class="row"><div class="rb"><div class="r1">${x.isTrack ? NOTE_SVG : ''}<div class="t clamp2">${esc(x.primary)}</div></div><div class="r2 clamp2">${esc(x.secondary)}</div>${x.release ? `<div class="r2 clamp2">on <span class="rel">${esc(x.release)}</span></div>` : ''}${x.note ? `<div class="note clamp2">Note: ${esc(x.note)}</div>` : ''}</div><a class="ic" href="${esc(x.url)}" target="_blank" rel="noopener" aria-label="${esc(x.aria)}">${iconHTML(x.kind, x.state, 30)}</a></div>`;
+function rowHTML(g) {
+  const open = S.open.has(g.id), n = g.tracks.length;
+  const shown = open ? g.tracks : g.tracks.slice(0, g.pre);
+  const tl = shown.length ? `<div class="tl">${shown.map((t) => `<div class="tk">${NOTE_SVG}<div>${esc(t.t)}${t.who ? ` <span class="ta">\u2013 ${esc(t.who)}</span>` : ''}</div></div>`).join('')}</div>` : '';
+  let tog = '';
+  if (n > g.pre) tog = `<button class="tog" data-open="${g.id}" aria-expanded="${open}">${open ? 'Show less \u25B4' : (g.pre === 0 ? n + (n === 1 ? ' track' : ' tracks') + ' \u25BE' : '+' + (n - g.pre) + ' more \u25BE')}</button>`;
+  return `<div class="row"><div class="rb"><div class="t clamp2">${esc(g.title)}</div><div class="r2 clamp2">${esc(g.artist)}</div>${tl}${tog}${g.note ? `<div class="note clamp2">Note: ${esc(g.note)}</div>` : ''}</div><a class="ic" href="${esc(g.url)}" target="_blank" rel="noopener" aria-label="${esc(g.aria)}">${iconHTML(g.kind, g.state, 30)}</a></div>`;
 }
 function recents() { try { return JSON.parse(lsGet('recents', '[]')); } catch (e) { return []; } }
 function pushRecent(q) {
@@ -603,20 +615,21 @@ function renderSearch() {
       else html += `<div class="sec"><div class="lab">RECENT SEARCHES</div><div class="chips">${rc.map((x) => `<button class="chip" data-chip="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
     }
   } else {
-    const R = runSearch(tokens), n = R.items.length;
-    $('#count').textContent = n + (n === 1 ? ' result' : ' results');
+    const R = runSearch(tokens), n = R.items.length, T = R.tracksTotal;
+    $('#count').textContent = T + (T === 1 ? ' track' : ' tracks') + ' \u00b7 ' + n + (n === 1 ? ' record' : ' records');
     if (S.mode !== 'wantlist' && ((!S.includeInactive && R.hidden > 0) || (S.includeInactive && R.shownInactive > 0))) {
-      html += `<button class="dash" data-toggle-inactive>${S.includeInactive ? 'Showing hits from inactive folders · tap to hide' : '+' + R.hidden + (R.hidden === 1 ? ' hit' : ' hits') + ' in inactive folders · tap to include'}</button>`;
+      html += `<button class="dash" data-toggle-inactive>${S.includeInactive ? 'Showing hits from inactive folders \u00b7 tap to hide' : '+' + R.hidden + (R.hidden === 1 ? ' record' : ' records') + ' in inactive folders \u00b7 tap to include'}</button>`;
     }
     if (n) {
-      html += `<div class="list">${R.items.slice(0, 150).map(rowHTML).join('')}</div>`;
-      if (n > 150) html += `<div class="small mu center">Showing the first 150 of ${fmtN(n)} results. Type more to narrow it down.</div>`;
+      html += `<div class="list">${R.items.slice(0, 80).map(rowHTML).join('')}</div>`;
+      if (n > 80) html += `<div class="small mu center">Showing the first 80 of ${fmtN(n)} records. Type more to narrow it down.</div>`;
     } else {
       html += `<div class="empty"><h2>No hits</h2><div class="small mu">Nothing in the active folders or the Wantlist for this search.</div><a class="ybtn" href="${esc($('#discogs').href)}" target="_blank" rel="noopener">Search on Discogs ${EXT}</a></div>`;
     }
   }
+  const keep = $('#results').scrollTop;
   $('#results').innerHTML = html;
-  if (lastQ !== S.q) { $('#results').scrollTop = 0; lastQ = S.q; }
+  if (lastQ !== S.q) { $('#results').scrollTop = 0; lastQ = S.q; } else $('#results').scrollTop = keep;
 }
 
 /* ---------- update view ---------- */
@@ -829,19 +842,21 @@ function renderAll() {
 /* ---------- events ---------- */
 let qTimer = null, rTimer = null;
 $('#q').addEventListener('input', (e) => {
-  S.q = e.target.value; S.includeInactive = false;
+  S.q = e.target.value; S.includeInactive = false; S.open = new Set();
   renderSearch();
   clearTimeout(rTimer); rTimer = setTimeout(() => pushRecent(S.q), 2000);
 });
 $('#clear').addEventListener('click', () => { S.q = ''; $('#q').value = ''; renderSearch(); $('#q').focus(); });
 $('#b-legend').addEventListener('click', () => go('help'));
 $('#b-understood').addEventListener('click', () => go('search'));
-$$('.mode').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; lsSet('mode', S.mode); S.includeInactive = false; renderSearch(); }));
+$$('.mode').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; lsSet('mode', S.mode); S.includeInactive = false; S.open = new Set(); renderSearch(); }));
 document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]');
   if (g) { e.preventDefault(); go(g.dataset.go); return; }
   const c = e.target.closest('[data-chip]');
   if (c) { S.q = c.dataset.chip; $('#q').value = S.q; renderSearch(); return; }
+  const op = e.target.closest('[data-open]');
+  if (op) { const id = +op.dataset.open; if (S.open.has(id)) S.open.delete(id); else S.open.add(id); renderSearch(); return; }
   const up = e.target.closest('[data-up]');
   if (up) { setUP(up.dataset.up); return; }
   if (e.target.closest('[data-toggle-inactive]')) { S.includeInactive = !S.includeInactive; renderSearch(); }
