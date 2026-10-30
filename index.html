@@ -39,6 +39,15 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
 .pill.ok{background:#17301D;color:var(--gr)}
 .pill.bad{background:#3A1717;color:var(--rd)}
 .controls{padding:10px 16px 10px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);background:var(--bg);flex:none}
+.ctop{padding:6px 16px 6px;display:flex;flex-direction:column;gap:8px;flex:none}
+.cbot{padding:8px 16px 10px;border-top:1px solid var(--line);background:var(--bg);flex:none}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;height:44px;border-radius:12px;border:1.5px solid var(--bd);background:transparent;color:var(--tx2);font-size:14px;font-weight:600}
+.seg button.on{background:var(--tx);border-color:var(--tx);color:#14120F}
+details.chk{border-radius:14px;background:var(--s1);padding:0 14px}
+details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14px;font-weight:600;color:var(--tx2);cursor:pointer}
+.mono{margin:0;font:12px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--tx2)}
+.vfoot{text-align:center;font-size:12px;color:#6F685E}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .titlerow .subrow{min-width:0;flex-wrap:nowrap;gap:8px}#sub{white-space:nowrap}
 .searchbox{position:relative;display:flex;align-items:center}
@@ -139,9 +148,7 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
         </div>
       </div>
     </div>
-    <div id="results" class="resultswrap"></div>
-    <div class="controls">
-      <div class="hint"><span id="count"></span><span id="fhint"></span></div>
+    <div class="ctop">
       <div class="modes">
         <button class="mode col" data-mode="collection" aria-pressed="false">Collection</button>
         <button class="mode want" data-mode="wantlist" aria-pressed="false">Wantlist</button>
@@ -150,6 +157,10 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg>
         </a>
       </div>
+      <div class="hint"><span id="count"></span><span id="fhint"></span></div>
+    </div>
+    <div id="results" class="resultswrap"></div>
+    <div class="cbot">
       <div class="searchbox">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9A196" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
         <input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search artist, title or track" placeholder="Artist, title or track">
@@ -158,6 +169,11 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
         </button>
       </div>
     </div>
+  </section>
+
+  <section id="v-help" class="view" aria-label="Help">
+    <div class="scroll"><h1>Help</h1><div id="help-body"></div></div>
+    <div class="cbot"><button id="b-understood" class="pbtn" style="width:100%">Understood</button></div>
   </section>
 
   <section id="v-update" class="view" aria-label="Update">
@@ -171,26 +187,37 @@ h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em
       </div>
       <div class="sec">
         <div class="lab">1 · CSV FILES</div>
+        <div id="u-mode" class="sec"></div>
         <div id="u-files" class="sec"></div>
+        <div id="u-diff" class="small" style="color:var(--tx2);font-weight:500"></div>
       </div>
       <div class="sec">
-        <div class="lab">2 · DISCOGS TOKEN (OPTIONAL)</div>
+        <div class="sechead"><div class="lab">2 · COLLECTION FOLDERS</div><div id="f-sum" class="small" style="color:var(--tx2);font-weight:500"></div></div>
+        <div id="u-folders"></div>
+        <div class="small mu">Folders without a check under In app are not loaded into the app (and are removed from it at the next update). Folders without a check under In search stay in the app, and their hits are one tap away on the search screen. The Wantlist has no folders.</div>
+      </div>
+      <div class="sec">
+        <div class="lab">3 · DISCOGS TOKEN (OPTIONAL)</div>
         <div class="card" style="gap:10px">
           <div class="small mu">Used to fetch tracklists. With a token fetching is about 2.4 times faster (60 instead of 25 requests per minute).</div>
           <div class="tokrow"><input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Discogs personal access token" placeholder="Paste your personal access token"><button id="tok-save" class="btn">Save</button></div>
           <div id="tok-state" class="small mu"></div>
         </div>
       </div>
-      <div class="sec">
-        <div class="sechead"><div class="lab">3 · COLLECTION FOLDERS</div><div id="f-sum" class="small" style="color:var(--tx2);font-weight:500"></div></div>
-        <div id="u-folders"></div>
-        <div class="small mu">Folders without a check under In app are removed from the app at the next update. Folders without a check under In search stay in the app, and their hits are one tap away on the search screen. The Wantlist has no folders.</div>
-      </div>
       <div class="foot">
         <button id="b-import" class="pbtn">Import and fetch tracklists</button>
         <div id="import-note" class="small mu center"></div>
         <button id="b-clear" class="linkbtn">Clear all data</button>
       </div>
+      <details class="chk"><summary>Check a release</summary>
+        <div style="display:flex;flex-direction:column;gap:10px;padding-bottom:14px">
+          <div class="small mu">Enter a release_id (the number in the Discogs URL) to compare what is stored with what Discogs returns right now.</div>
+          <div class="tokrow"><input id="chk-id" inputmode="numeric" aria-label="Release id" placeholder="e.g. 356755" style="flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-size:16px;padding:0 12px"><button id="chk-go" class="btn">Check</button></div>
+          <button id="chk-redo" class="btn" hidden>Fetch this release again</button>
+          <pre id="chk-out" class="mono"></pre>
+        </div>
+      </details>
+      <div class="vfoot" id="vfoot"></div>
     </div>
   </section>
 
@@ -226,6 +253,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
+const VERSION = 'v3';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -381,7 +409,9 @@ let META = { lastImport: 0 };
 let TOKEN = lsGet('dtoken', '');
 let SW_READY = false;
 let busy = false;
-const S = { q: '', mode: lsGet('mode', 'both'), includeInactive: false, legend: false, view: 'search' };
+const S = { q: '', mode: lsGet('mode', 'both'), includeInactive: false, view: 'search' };
+let UP = 'new', SET_BAK = null, importArmed = false;
+const srcFor = (t) => PICK[t] || (UP === 'update' ? SRC[t] : null);
 const F = { state: 'idle', msg: '', recent: [], loop: false, errs: 0, wake: null };
 
 function hydrate(r, te) {
@@ -422,7 +452,7 @@ function buildRecords(src, settings) {
 /* folder list from the collection source (picked or stored) */
 let folderCache = { key: null, list: [] };
 function folderList() {
-  const col = PICK.collection || SRC.collection;
+  const col = srcFor('collection');
   if (!col) return [];
   if (folderCache.key === col) return folderCache.list;
   const m = new Map();
@@ -525,8 +555,8 @@ function renderPills() {
 /* ---------- search view ---------- */
 const LEGEND_STATES = [['collection', 'Collection', 'filled'], ['want', 'Wantlist', 'outline'], ['both', 'In both', 'dot']];
 const LEGEND_KINDS = [['single', 'Single', '7 inch'], ['maxi', 'Maxi-single', '10 or 12 inch'], ['album', 'Album', 'LP, EP, best-of'], ['comp', 'Compilation', 'Various artists'], ['cd', 'CD', 'Album or compilation'], ['singlecd', 'Single CD', 'Single or maxi'], ['other', 'Other', 'Cassette, acetate, file']];
-function legendHTML() {
-  return `<div class="card"><div class="lab">LIST</div><div class="legendgrid3">${LEGEND_STATES.map((s) => `<div>${iconHTML('album', s[0], 30)}<div class="lt" style="font-size:13px">${s[1]}</div><div class="ls">${s[2]}</div></div>`).join('')}</div><div class="lab">TYPE</div><div class="legendgrid2">${LEGEND_KINDS.map((k) => `<div>${iconHTML(k[0], 'plain', 28)}<div style="min-width:0"><div class="lt">${k[1]}</div><div class="ls">${k[2]}</div></div></div>`).join('')}</div><div class="small mu">Tap an icon in a result to open that release on Discogs.</div></div>`;
+function helpHTML() {
+  return `<div class="card" style="margin-bottom:16px"><div class="lab">SEARCH</div><div class="small" style="color:var(--tx2)">Type any part of an artist, title or track. Small typing mistakes are forgiven. Results are found offline.</div></div><div class="card"><div class="lab">LIST</div><div class="legendgrid3">${LEGEND_STATES.map((s) => `<div>${iconHTML('album', s[0], 30)}<div class="lt" style="font-size:13px">${s[1]}</div><div class="ls">${s[2]}</div></div>`).join('')}</div><div class="lab">TYPE</div><div class="legendgrid2">${LEGEND_KINDS.map((k) => `<div>${iconHTML(k[0], 'plain', 28)}<div style="min-width:0"><div class="lt">${k[1]}</div><div class="ls">${k[2]}</div></div></div>`).join('')}</div><div class="small mu">Tap an icon in a result to open that release on Discogs.</div></div>`;
 }
 function rowHTML(x) {
   return `<div class="row"><div class="rb"><div class="r1">${x.isTrack ? NOTE_SVG : ''}<div class="t clamp2">${esc(x.primary)}</div></div><div class="r2 clamp2">${esc(x.secondary)}</div>${x.release ? `<div class="r2 clamp2">on <span class="rel">${esc(x.release)}</span></div>` : ''}${x.note ? `<div class="note clamp2">Note: ${esc(x.note)}</div>` : ''}</div><a class="ic" href="${esc(x.url)}" target="_blank" rel="noopener" aria-label="${esc(x.aria)}">${iconHTML(x.kind, x.state, 30)}</a></div>`;
@@ -542,18 +572,17 @@ function renderSearch() {
   $('#sub').textContent = META.lastImport ? fmtN(DB.length) + ' records · ' + new Date(META.lastImport).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'No data yet';
   $('#clear').hidden = S.q.length === 0;
   $$('.mode').forEach((b) => { const on = b.dataset.mode === S.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-  $('#b-legend').setAttribute('aria-pressed', S.legend);
   $('#discogs').href = tokens.length ? 'https://www.discogs.com/search/?q=' + encodeURIComponent(S.q.trim()) + '&type=all' : 'https://www.discogs.com/search/';
   const fs = folderStats();
   $('#fhint').textContent = S.mode === 'wantlist' ? 'Wantlist has no folders' : (fs.total ? (S.includeInactive ? 'Searching all ' + fs.app + ' folders' : 'Searching ' + fs.search + ' of ' + fs.app + ' folders') : '');
   let html = '';
-  if (idle || S.legend) html += legendHTML();
   if (idle) {
     $('#count').textContent = '';
     if (!DB.length) html += `<div class="empty"><h2>No records yet</h2><div class="small mu">Import your Discogs CSV files to start searching, even without internet.</div><a class="ybtn" href="#update" data-go="update" style="background:var(--tx)">Open Update</a></div>`;
     else {
       const rc = recents();
-      if (rc.length) html += `<div class="sec"><div class="lab">RECENT SEARCHES</div><div class="chips">${rc.map((x) => `<button class="chip" data-chip="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
+      if (!rc.length) html += `<div class="small mu center" style="padding:24px 0">Type an artist, title or track below.</div>`;
+      else html += `<div class="sec"><div class="lab">RECENT SEARCHES</div><div class="chips">${rc.map((x) => `<button class="chip" data-chip="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
     }
   } else {
     const R = runSearch(tokens), n = R.items.length;
@@ -574,31 +603,56 @@ function renderSearch() {
 
 /* ---------- update view ---------- */
 function fileCard(label, src, id) {
-  const info = src ? (src.type === 'collection' ? fmtN(src.rows.length) + ' rows · ' + fmtN(src.unique) + ' unique records' : fmtN(src.unique) + ' records') : 'No file chosen';
-  const isNew = src && ((label === 'Collection' && PICK.collection) || (label === 'Wantlist' && PICK.wantlist));
-  return `<div class="fcard"><div class="fb"><div style="font-size:15px;font-weight:600">${label}</div><div class="fname">${src ? esc(src.name) : 'Choose the CSV exported from Discogs'}</div><div class="small" style="color:var(--tx2);font-weight:500">${info}${isNew ? ' · not imported yet' : ''}</div></div><label class="btn">${src ? 'Change' : 'Choose'}<input type="file" id="${id}" accept=".csv,text/csv,text/plain"></label></div>`;
+  const info = src ? (src.type === 'collection' ? fmtN(src.rows.length) + ' rows \u00b7 ' + fmtN(src.unique) + ' unique records' : fmtN(src.unique) + ' records') : 'No file chosen';
+  const isNew = src && PICK[label.toLowerCase()] === src;
+  return `<div class="fcard"><div class="fb"><div style="font-size:15px;font-weight:600">${label}</div><div class="fname">${src ? esc(src.name) : 'Choose the CSV exported from Discogs'}</div><div class="small" style="color:var(--tx2);font-weight:500">${info}${isNew ? ' \u00b7 not imported yet' : ''}</div></div><label class="btn">${src ? 'Change' : 'Choose'}<input type="file" id="${id}" accept=".csv,text/csv,text/plain"></label></div>`;
+}
+function setUP(m) {
+  if (m === UP) return;
+  PICK = {}; importArmed = false;
+  if (m === 'new') { SET_BAK = SETTINGS; SETTINGS = { folders: {} }; }
+  else { if (SET_BAK) SETTINGS = SET_BAK; SET_BAK = null; }
+  UP = m; folderCache = { key: null, list: [] };
+  renderUpdate();
+}
+function diffInfo() {
+  if (UP !== 'update' || !(PICK.collection || PICK.wantlist)) return '';
+  const next = buildRecords({ collection: srcFor('collection'), wantlist: srcFor('wantlist') }, SETTINGS);
+  const have = new Set(DB.map((r) => r.id)), want = new Set(next.map((r) => r.id));
+  let add = 0, gone = 0;
+  want.forEach((id) => { if (!have.has(id)) add++; });
+  have.forEach((id) => { if (!want.has(id)) gone++; });
+  return 'Compared with the app: +' + fmtN(add) + ' new, \u2212' + fmtN(gone) + ' removed. Only the new ones are fetched.';
 }
 function renderUpdate() {
-  const col = PICK.collection || SRC.collection, want = PICK.wantlist || SRC.wantlist;
+  const hasData = DB.length > 0;
+  if (!hasData && UP !== 'new') setUP('new');
+  $('#u-mode').innerHTML = hasData
+    ? `<div class="seg" role="group" aria-label="Update type"><button data-up="update" class="${UP === 'update' ? 'on' : ''}" aria-pressed="${UP === 'update'}">Update</button><button data-up="new" class="${UP === 'new' ? 'on' : ''}" aria-pressed="${UP === 'new'}">New collection</button></div><div class="small mu">${UP === 'update' ? 'Choose a more recent export of the same collection. Your folder choices and the tracklists already fetched are kept.' : 'Start from scratch. Choose the CSV files, then pick which folders go into the app. Only after that is the data loaded. The current collection is replaced.'}</div>`
+    : '<div class="small mu">No collection in the app yet. Choose the CSV files, pick the folders you want, then import.</div>';
+  const col = srcFor('collection'), want = srcFor('wantlist');
   $('#u-files').innerHTML = fileCard('Collection', col, 'f-col') + fileCard('Wantlist', want, 'f-want');
+  $('#u-diff').textContent = diffInfo();
   $('#tok-state').textContent = TOKEN ? 'Token saved on this device.' : 'No token. Fetching still works, just slower.';
   if (document.activeElement !== $('#token')) $('#token').value = TOKEN;
+  $('#vfoot').textContent = 'Vinyl Collection ' + VERSION;
   const list = folderList(), fs = folderStats();
-  $('#f-sum').textContent = list.length ? fs.app + ' in app · ' + fs.search + ' in search' : '';
+  $('#f-sum').textContent = list.length ? fs.app + ' in app \u00b7 ' + fs.search + ' in search' : '';
   if (!list.length) {
     $('#u-folders').innerHTML = '<div class="card small mu">Choose the Collection CSV to see your folders.</div>';
   } else {
     $('#u-folders').innerHTML = `<div class="ftable"><div class="fhead"><div style="flex:1">Folder</div><div style="width:72px;text-align:center">In app</div><div style="width:72px;text-align:center">In search</div></div>${list.map((f, i) => {
       const s = SETTINGS.folders[f.name] || { inApp: true, inSearch: true };
-      const rm = !s.inApp && folderInDB(f.name);
+      const rm = UP === 'update' && !s.inApp && folderInDB(f.name);
       return `<div class="frow"><div class="fn"><div style="font-size:15px;font-weight:500;line-height:1.25;overflow-wrap:anywhere">${esc(f.name)}</div><div class="small mu">${fmtN(f.count)} ${f.count === 1 ? 'record' : 'records'}</div>${rm ? '<div class="rm">Removed from the app on update</div>' : ''}</div><label class="cbx a"><input type="checkbox" data-fi="${i}" data-k="app" ${s.inApp ? 'checked' : ''} aria-label="${esc(f.name)}: include in app"></label><label class="cbx s"><input type="checkbox" data-fi="${i}" data-k="search" ${s.inApp && s.inSearch ? 'checked' : ''} ${s.inApp ? '' : 'disabled'} aria-label="${esc(f.name)}: include in search"></label></div>`;
     }).join('')}</div>`;
   }
   const hasSrc = !!(col || want), online = navigator.onLine !== false;
   const b = $('#b-import');
   b.disabled = !hasSrc || !online || busy;
-  b.textContent = busy ? 'Importing…' : (hasSrc ? 'Import and fetch tracklists' : 'Choose the CSV files first');
-  $('#import-note').textContent = !online ? 'No internet connection. Connect to Wi-Fi or mobile data to update.' : 'Only new records are fetched. What is already in the app is kept.';
+  b.textContent = busy ? 'Importing\u2026' : !hasSrc ? 'Choose the CSV files first'
+    : (UP === 'new' ? (hasData ? (importArmed ? 'Tap again to replace the current collection' : 'Import new collection') : 'Import and fetch tracklists') : 'Update and fetch new tracklists');
+  $('#import-note').textContent = !online ? 'No internet connection. Connect to Wi-Fi or mobile data to update.' : (UP === 'new' && hasData ? 'The current collection in the app will be replaced.' : 'Only new records are fetched. What is already in the app is kept.');
 }
 
 async function onPick(file) {
@@ -612,14 +666,24 @@ async function onPick(file) {
   }
 }
 async function doImport() {
-  if (busy) return; busy = true; renderUpdate();
+  if (busy) return;
+  if (UP === 'new' && DB.length && !importArmed) { importArmed = true; renderUpdate(); setTimeout(() => { importArmed = false; if (S.view === 'update') renderUpdate(); }, 5000); return; }
+  importArmed = false; busy = true; renderUpdate();
+  const wasNew = UP === 'new';
   try {
-    const src = { collection: PICK.collection || SRC.collection, wantlist: PICK.wantlist || SRC.wantlist };
-    SRC = src; PICK = {};
+    const src = { collection: srcFor('collection'), wantlist: srcFor('wantlist') };
+    SRC = src; PICK = {}; SET_BAK = null; UP = 'update';
     ensureFolderSettings();
     await metaSet('src', src); await metaSet('settings', SETTINGS);
     const recs = buildRecords(src, SETTINGS);
     await idbPutMany('records', recs, true);
+    if (wasNew) {
+      const keep = new Set(recs.map((r) => r.id));
+      const old = await idbAll('tracks');
+      const t = IDB.transaction('tracks', 'readwrite');
+      old.forEach((x) => { if (!keep.has(x.id)) t.objectStore('tracks').delete(x.id); });
+      await txDone(t);
+    }
     META.lastImport = Date.now(); await metaSet('lastImport', META.lastImport);
     await loadDB();
     try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* ignore */ }
@@ -727,6 +791,7 @@ function renderAll() {
   if (S.view === 'search') renderSearch();
   if (S.view === 'update') renderUpdate();
   if (S.view === 'progress') renderProgress();
+  if (S.view === 'help') $('#help-body').innerHTML = helpHTML();
 }
 
 /* ---------- events ---------- */
@@ -737,13 +802,16 @@ $('#q').addEventListener('input', (e) => {
   clearTimeout(rTimer); rTimer = setTimeout(() => pushRecent(S.q), 2000);
 });
 $('#clear').addEventListener('click', () => { S.q = ''; $('#q').value = ''; renderSearch(); $('#q').focus(); });
-$('#b-legend').addEventListener('click', () => { S.legend = !S.legend; renderSearch(); });
+$('#b-legend').addEventListener('click', () => go('help'));
+$('#b-understood').addEventListener('click', () => go('search'));
 $$('.mode').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; lsSet('mode', S.mode); S.includeInactive = false; renderSearch(); }));
 document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]');
   if (g) { e.preventDefault(); go(g.dataset.go); return; }
   const c = e.target.closest('[data-chip]');
   if (c) { S.q = c.dataset.chip; $('#q').value = S.q; renderSearch(); return; }
+  const up = e.target.closest('[data-up]');
+  if (up) { setUP(up.dataset.up); return; }
   if (e.target.closest('[data-toggle-inactive]')) { S.includeInactive = !S.includeInactive; renderSearch(); }
 });
 $('#u-files').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) onPick(f); });
@@ -752,18 +820,42 @@ $('#u-folders').addEventListener('change', async (e) => {
   const f = folderList()[+el.dataset.fi]; if (!f) return;
   const s = SETTINGS.folders[f.name] || (SETTINGS.folders[f.name] = { inApp: true, inSearch: true });
   if (el.dataset.k === 'app') s.inApp = el.checked; else s.inSearch = el.checked;
-  await metaSet('settings', SETTINGS);
+  if (UP === 'update') await metaSet('settings', SETTINGS);
   renderUpdate();
 });
 $('#tok-save').addEventListener('click', () => { TOKEN = $('#token').value.trim(); lsSet('dtoken', TOKEN); renderUpdate(); });
 $('#b-import').addEventListener('click', doImport);
+async function apiRelease(id) {
+  const res = await fetch('https://api.discogs.com/releases/' + id + (TOKEN ? '?token=' + encodeURIComponent(TOKEN) : ''));
+  if (!res.ok) throw new Error('Discogs answered ' + res.status);
+  return res.json();
+}
+let chkJson = null;
+$('#chk-go').addEventListener('click', async () => {
+  const id = parseInt($('#chk-id').value, 10), out = $('#chk-out'); chkJson = null; $('#chk-redo').hidden = true;
+  if (!id) { out.textContent = 'Enter a release_id.'; return; }
+  const r = DB.find((x) => x.id === id);
+  out.textContent = r ? 'In app: ' + r.artist + ' \u2013 ' + r.title + ' (' + CAT[r.kind] + ')\nStored tracks: ' + (r.done ? r.tracks.length : 'not fetched yet') + (r.tracks.length ? '\n' + r.tracks.map((t) => '  ' + t.t).join('\n') : '') : 'Not in the app.';
+  if (navigator.onLine === false) { out.textContent += '\n\nOffline: cannot ask Discogs.'; return; }
+  try {
+    const j = await apiRelease(id); chkJson = j;
+    const raw = (j.tracklist || []).map((x) => '  ' + (x.position || '-') + ' [' + (x.type_ || '') + '] ' + (x.title || '') + (x.sub_tracks && x.sub_tracks.length ? ' (+' + x.sub_tracks.length + ' sub)' : ''));
+    out.textContent += '\n\nDiscogs now: ' + raw.length + ' entries\n' + raw.join('\n');
+    $('#chk-redo').hidden = !r;
+  } catch (e) { out.textContent += '\n\n' + e.message; }
+});
+$('#chk-redo').addEventListener('click', async () => {
+  const id = parseInt($('#chk-id').value, 10), r = DB.find((x) => x.id === id);
+  if (!r || !chkJson) return;
+  await saveTracks(r, parseTracklist(chkJson), 'ok'); $('#chk-go').click();
+});
 let clearArmed = false;
 $('#b-clear').addEventListener('click', async () => {
   if (!clearArmed) { clearArmed = true; $('#b-clear').textContent = 'Tap again to delete all data on this device'; setTimeout(() => { clearArmed = false; $('#b-clear').textContent = 'Clear all data'; }, 4000); return; }
   clearArmed = false; $('#b-clear').textContent = 'Clear all data';
   F.state = 'idle'; unlockScreen();
   await idbPutMany('records', [], true); await idbPutMany('tracks', [], true); await idbPutMany('meta', [], true);
-  DB = []; SRC = { collection: null, wantlist: null }; PICK = {}; SETTINGS = { folders: {} }; META = { lastImport: 0 }; F.recent = [];
+  DB = []; SRC = { collection: null, wantlist: null }; PICK = {}; SETTINGS = { folders: {} }; META = { lastImport: 0 }; F.recent = []; UP = 'new'; SET_BAK = null;
   renderAll();
 });
 $('#b-fetch').addEventListener('click', () => {
@@ -789,6 +881,7 @@ async function init() {
     SETTINGS = await metaGet('settings', { folders: {} });
     META.lastImport = await metaGet('lastImport', 0);
     await loadDB();
+    UP = DB.length ? 'update' : 'new';
     const flag = await metaGet('fetchFlag', null);
     const pending = pendingCount();
     if (DB.length && pending === 0) F.state = 'done';
@@ -799,7 +892,12 @@ async function init() {
     return;
   }
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    const hadCtl = !!navigator.serviceWorker.controller; let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadCtl || reloading || F.state === 'running' || busy) return;
+      reloading = true; location.reload();
+    });
+    navigator.serviceWorker.register('sw.js').then((reg) => { try { reg.update(); } catch (e) { /* ignore */ } }).catch(() => {});
     navigator.serviceWorker.ready.then(() => { SW_READY = true; renderPills(); }).catch(() => {});
   }
   const h = location.hash.replace('#', '');
