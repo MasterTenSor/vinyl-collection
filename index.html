@@ -86,6 +86,7 @@ details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14
 .rel{color:var(--bl);font-weight:500}
 .note{font-size:13px;line-height:1.3;font-style:italic;color:var(--am)}
 .clamp2{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bh{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);padding:6px 4px 0;flex:none}
 .dash{min-height:44px;padding:8px 12px;border-radius:12px;border:1px dashed #6A6256;background:transparent;color:var(--tx2);font-size:14px;font-weight:500;line-height:1.3;text-align:left;flex:none}
 .card{padding:14px;border-radius:14px;background:var(--s1);display:flex;flex-direction:column;gap:14px;flex:none}
 .legendgrid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -264,7 +265,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
-const VERSION = 'v1.10';
+const VERSION = 'v1.11';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -531,6 +532,7 @@ function runSearch(tokens) {
   };
   collect(false);
   if (groups.length === 0 && tokens.some((t) => t.length >= 4)) collect(true);
+  const qn = tokens.join(' ');
   let hidden = 0, shownInactive = 0, tracksTotal = 0; const items = [];
   const FIXED = { single: 1, maxi: 1, singlecd: 1 };
   for (const { rows, fuzzy } of groups) {
@@ -547,16 +549,18 @@ function runSearch(tokens) {
       tracks = r.tracks.map((t, i) => ({ t: t.t, who: /^various/i.test(r.artist) && t.a ? t.a : '', m: mset.has(i) }));
     }
     const mode = rel ? (FIXED[r.kind] ? 'fixed' : 'rel') : 'hit';
+    const nameEq = (x) => normFull(String(x || '').replace(/\s*\(\d+\)\s*$/, '')) === qn;
+    const tier = !rel ? 2 : (!fuzzy && (nameEq(r.artist) || nameEq(r.title)) ? 0 : 1);
     tracksTotal += rel ? (tracks.length || 1) : rows.length;
     items.push({
       id: r.id, kind: r.kind, state, title: r.title,
       artist: r.artist + (inactive ? ' \u00b7 ' + r.folders[0] : ''),
       tracks, mode, rel, note: r.inW ? r.note : '', url: r.url,
       aria: 'Open on Discogs: ' + r.title + ', ' + CAT[r.kind] + ', ' + listName,
-      score: scoreOf(rows[0], tokens, fuzzy), ix: r.ix
+      score: scoreOf(rows[0], tokens, fuzzy), tier, ix: r.ix
     });
   }
-  items.sort((a, b) => b.score - a.score || a.ix - b.ix);
+  items.sort((a, b) => a.tier - b.tier || b.score - a.score || a.ix - b.ix);
   return { items, hidden, shownInactive, tracksTotal };
 }
 
@@ -628,7 +632,16 @@ function renderSearch() {
       html += `<button class="dash" data-toggle-inactive>${S.includeInactive ? 'Showing hits from inactive folders \u00b7 tap to hide' : '+' + R.hidden + (R.hidden === 1 ? ' record' : ' records') + ' in inactive folders \u00b7 tap to include'}</button>`;
     }
     if (n) {
-      html += `<div class="list">${R.items.slice(0, 80).map(rowHTML).join('')}</div>`;
+      const shown = R.items.slice(0, 80), cnt = [0, 0, 0]; R.items.forEach((g) => { cnt[g.tier]++; });
+      const TL = ['Exact match', 'In artist or title', 'In track titles only'];
+      const multi = cnt.filter((c) => c > 0).length > 1;
+      let cur = -1, part = '';
+      const flush = () => { if (part) html += `<div class="list">${part}</div>`; part = ''; };
+      for (const g of shown) {
+        if (multi && g.tier !== cur) { flush(); html += `<div class="bh">${TL[g.tier]} \u00b7 ${cnt[g.tier]}</div>`; }
+        cur = g.tier; part += rowHTML(g);
+      }
+      flush();
       if (n > 80) html += `<div class="small mu center">Showing the first 80 of ${fmtN(n)} records. Type more to narrow it down.</div>`;
     } else {
       html += `<div class="empty"><h2>No hits</h2><div class="small mu">Nothing in the active folders or the Wantlist for this search.</div><a class="ybtn" href="${esc($('#discogs').href)}" target="_blank" rel="noopener">Search on Discogs ${EXT}</a></div>`;
