@@ -1,0 +1,16 @@
+{
+  "name": "Vinyl Collection",
+  "short_name": "Vinyl",
+  "description": "Offline search in your Discogs vinyl collection and wantlist",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14120F",
+  "theme_color": "#14120F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

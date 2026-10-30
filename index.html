@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14120F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vinyl">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>Vinyl Collection</title>
+<style>
+:root{--bg:#14120F;--s1:#1E1B17;--s2:#26221D;--line:#2B2721;--bd:#3A342C;--tx:#F3EEE6;--tx2:#D8D1C6;--mu:#A9A196;--gr:#86E39A;--am:#FFC15E;--ye:#FFE45C;--bl:#6DB8FF;--rd:#FF9A9A;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:var(--font);-webkit-text-size-adjust:100%}
+body{overscroll-behavior:none}
+#app{max-width:560px;margin:0 auto;height:100%;position:relative}
+.view{display:none;position:absolute;inset:0;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.view.active{display:flex}
+button,input,a{font-family:inherit;color:inherit}
+button{cursor:pointer}
+a{text-decoration:none}
+:focus-visible{outline:2px solid var(--tx);outline-offset:2px}
+h1{margin:0;font-size:26px;line-height:1.1;font-weight:800;letter-spacing:-.01em}
+.mu{color:var(--mu)}
+.small{font-size:13px;line-height:1.4}
+.lab{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--mu);line-height:1}
+.head{padding:14px 16px 4px}
+.titlerow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hbtns{display:flex;align-items:center}
+.iconbtn{width:44px;height:44px;border:0;border-radius:22px;background:transparent;color:var(--tx2);display:flex;align-items:center;justify-content:center}
+.subrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pillwrap{display:flex;align-items:center;min-height:44px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:16px;font-size:13px;font-weight:600;line-height:1}
+.pill.ok{background:#17301D;color:var(--gr)}
+.pill.bad{background:#3A1717;color:var(--rd)}
+.controls{padding:0 16px 10px;display:flex;flex-direction:column;gap:10px}
+.searchbox{position:relative;display:flex;align-items:center}
+.searchbox>svg{position:absolute;left:16px;pointer-events:none}
+#q{width:100%;height:52px;border-radius:14px;border:1px solid var(--bd);background:var(--s1);color:var(--tx);font-size:17px;font-weight:500;padding:0 48px 0 46px;-webkit-appearance:none;appearance:none}
+#q::placeholder{color:var(--mu)}
+.clear{position:absolute;right:4px;width:44px;height:44px;border:0;border-radius:22px;background:transparent;color:var(--mu);display:flex;align-items:center;justify-content:center}
+.modes{display:flex;gap:6px;align-items:stretch}
+.mode{flex:1;min-width:0;height:44px;border-radius:12px;border:1.5px solid;background:transparent;font-weight:600;font-size:13px;padding:0 2px}
+.mode.col{border-color:var(--gr);color:var(--gr)}.mode.col.on{background:var(--gr);color:#0F1A12}
+.mode.want{border-color:var(--am);color:var(--am)}.mode.want.on{background:var(--am);color:#1F1606}
+.mode.both{border-color:var(--tx);color:var(--tx)}.mode.both.on{background:var(--tx);color:#14120F}
+.dbtn{flex:none;width:84px;height:44px;margin-left:8px;border-radius:12px;border:1.5px solid var(--ye);color:var(--ye);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px}
+.hint{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:500;color:var(--mu);min-height:16px}
+.resultswrap{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px;display:flex;flex-direction:column;gap:12px}
+.list{display:flex;flex-direction:column;gap:1px;border-radius:14px;overflow:hidden;background:var(--line);flex:none}
+.row{display:flex;align-items:center;gap:6px;padding:6px 14px 6px 6px;background:var(--s1);min-height:60px}
+.ic{flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.ico{position:relative;display:block;flex:none}
+.ico svg{display:block}
+.ico .dot{position:absolute;top:0;right:0;width:9px;height:9px;border-radius:50%;background:var(--am);box-shadow:0 0 0 2px var(--s1)}
+.rb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:4px 0}
+.r1{display:flex;align-items:flex-start;gap:6px}
+.r1 svg{flex:none;margin-top:3px}
+.t{min-width:0;font-size:16px;font-weight:600;line-height:1.25}
+.r2{font-size:14px;line-height:1.3;color:var(--mu)}
+.rel{color:var(--bl);font-weight:500}
+.note{font-size:13px;line-height:1.3;font-style:italic;color:var(--am)}
+.clamp2{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dash{min-height:44px;padding:8px 12px;border-radius:12px;border:1px dashed #6A6256;background:transparent;color:var(--tx2);font-size:14px;font-weight:500;line-height:1.3;text-align:left;flex:none}
+.card{padding:14px;border-radius:14px;background:var(--s1);display:flex;flex-direction:column;gap:14px;flex:none}
+.legendgrid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.legendgrid3>div{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.legendgrid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.legendgrid2>div{display:flex;align-items:center;gap:10px}
+.lt{font-size:14px;font-weight:600;line-height:1.2}
+.ls{font-size:12px;line-height:1.3;color:var(--mu)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--bd);background:var(--s1);font-size:14px;font-weight:500}
+.empty{padding:24px 16px;border-radius:14px;background:var(--s1);text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center;flex:none}
+.empty h2{margin:0;font-size:18px;font-weight:800}
+.ybtn{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 24px;border-radius:14px;background:var(--ye);color:#1A1604;font-size:16px;font-weight:700;border:0}
+.scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 24px;display:flex;flex-direction:column;gap:20px}
+.bar{display:flex;align-items:center;gap:8px}
+.back{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin-left:-8px;color:var(--tx)}
+.sec{display:flex;flex-direction:column;gap:10px}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.fcard{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--s1)}
+.fcard .fb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.fname{font-size:13px;color:var(--mu);overflow-wrap:anywhere}
+.btn{flex:none;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--bd);background:var(--s2);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.btn input{display:none}
+.tokrow{display:flex;gap:8px}
+#token{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-size:16px;padding:0 12px}
+.ftable{display:flex;flex-direction:column;gap:1px;border-radius:14px;overflow:hidden;background:var(--line)}
+.fhead{display:flex;align-items:center;min-height:36px;padding-left:14px;background:var(--s2);font-size:12px;font-weight:600;color:var(--mu)}
+.frow{display:flex;align-items:center;min-height:52px;padding:4px 0 4px 14px;background:var(--s1)}
+.frow .fn{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding-right:8px}
+.cbx{flex:none;width:72px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cbx input{width:22px;height:22px;margin:0}
+.cbx.a input{accent-color:#F3EEE6}.cbx.s input{accent-color:#86E39A}
+.rm{font-size:12px;font-weight:600;line-height:1.3;color:var(--rd)}
+.foot{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.pbtn{height:56px;border:0;border-radius:14px;background:var(--tx);color:#14120F;font-size:16px;font-weight:700}
+.pbtn:disabled{background:#2B2721;color:#8A8378;cursor:not-allowed}
+.sbtn{height:56px;border-radius:14px;border:1px solid var(--bd);background:var(--s2);font-size:16px;font-weight:700}
+.center{text-align:center}
+.linkbtn{background:none;border:0;min-height:44px;color:var(--mu);font-size:13px;text-decoration:underline}
+.banner{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:14px;background:var(--s1)}
+.banner.bad{background:#3A1717}.banner.good{background:#17301D}
+.banner b{display:block;font-size:15px;margin-bottom:4px}
+.banner.bad b{color:var(--rd)}.banner.good b{color:var(--gr)}
+.banner div{font-size:14px;line-height:1.45}
+.big{display:flex;flex-direction:column;gap:12px;padding:20px 16px;border-radius:14px;background:var(--s1)}
+.big .pct{font-size:40px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.big .tr{display:flex;align-items:baseline;justify-content:space-between}
+.track{height:12px;border-radius:6px;background:var(--s2);overflow:hidden}
+.track>i{display:block;height:100%;border-radius:6px;background:var(--tx)}
+.recent{display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 14px;background:var(--s1);font-size:14px;font-weight:500;line-height:1.3}
+.recent svg{flex:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="v-search" class="view active" aria-label="Search">
+    <div class="head">
+      <div class="titlerow">
+        <h1>Vinyl Collection</h1>
+        <div class="hbtns">
+          <button id="b-legend" class="iconbtn" aria-label="Show legend" aria-pressed="false">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.1-2.4 3.6"></path><path d="M12 17v.01"></path></svg>
+          </button>
+          <a class="iconbtn" href="#update" data-go="update" aria-label="Update">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>
+          </a>
+        </div>
+      </div>
+      <div class="subrow"><span id="pill-search"></span><span id="sub" class="small mu"></span></div>
+    </div>
+    <div class="controls">
+      <div class="searchbox">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9A196" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search artist, title or track" placeholder="Artist, title or track">
+        <button id="clear" class="clear" aria-label="Clear search" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+      <div class="modes">
+        <button class="mode col" data-mode="collection" aria-pressed="false">Collection</button>
+        <button class="mode want" data-mode="wantlist" aria-pressed="false">Wantlist</button>
+        <button class="mode both" data-mode="both" aria-pressed="true">Both</button>
+        <a id="discogs" class="dbtn" href="https://www.discogs.com/search/" target="_blank" rel="noopener" aria-label="Search on Discogs">Discogs
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg>
+        </a>
+      </div>
+      <div class="hint"><span id="count"></span><span id="fhint"></span></div>
+    </div>
+    <div id="results" class="resultswrap"></div>
+  </section>
+
+  <section id="v-update" class="view" aria-label="Update">
+    <div class="scroll">
+      <div>
+        <div class="bar">
+          <a class="back" href="#search" data-go="search" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+          <h1>Update</h1>
+        </div>
+        <div class="subrow" id="pill-update"></div>
+      </div>
+      <div class="sec">
+        <div class="lab">1 · CSV FILES</div>
+        <div id="u-files" class="sec"></div>
+      </div>
+      <div class="sec">
+        <div class="lab">2 · DISCOGS TOKEN (OPTIONAL)</div>
+        <div class="card" style="gap:10px">
+          <div class="small mu">Used to fetch tracklists. With a token fetching is about 2.4 times faster (60 instead of 25 requests per minute).</div>
+          <div class="tokrow"><input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Discogs personal access token" placeholder="Paste your personal access token"><button id="tok-save" class="btn">Save</button></div>
+          <div id="tok-state" class="small mu"></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sechead"><div class="lab">3 · COLLECTION FOLDERS</div><div id="f-sum" class="small" style="color:var(--tx2);font-weight:500"></div></div>
+        <div id="u-folders"></div>
+        <div class="small mu">Folders without a check under In app are removed from the app at the next update. Folders without a check under In search stay in the app, and their hits are one tap away on the search screen. The Wantlist has no folders.</div>
+      </div>
+      <div class="foot">
+        <button id="b-import" class="pbtn">Import and fetch tracklists</button>
+        <div id="import-note" class="small mu center"></div>
+        <button id="b-clear" class="linkbtn">Clear all data</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-progress" class="view" aria-label="Tracklists">
+    <div class="scroll">
+      <div>
+        <div class="bar">
+          <a class="back" href="#search" data-go="search" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+          <h1>Fetching tracklists</h1>
+        </div>
+        <div class="subrow" id="pill-progress"></div>
+      </div>
+      <div id="p-banner"></div>
+      <div id="p-big"></div>
+      <div id="p-recent" class="sec"></div>
+      <div class="foot">
+        <button id="b-fetch" class="pbtn"></button>
+        <div id="p-note" class="small mu center"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtN = (n) => Number(n).toLocaleString('en-US');
+const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const FAST = /[?&]fast\b/.test(location.search);
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
+
+/* ---------- normalisation and spelling tolerance ---------- */
+const stemWord = (w) => (w.length >= 5 && w.endsWith('ing') ? w.slice(0, -1) : w);
+const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/&/g, ' and ').replace(/['’`´]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const normFull = (s) => norm(s).split(' ').filter(Boolean).map(stemWord).join(' ');
+const cleanArtist = (a) => String(a || '').replace(/\s*\(\d+\)\s*$/, '').replace(/\*+$/, '').trim();
+
+function ed(a, b, max) {
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > max) return max + 1;
+  let prev2 = null, prev = new Array(lb + 1), cur = new Array(lb + 1);
+  for (let j = 0; j <= lb; j++) prev[j] = j;
+  for (let i = 1; i <= la; i++) {
+    cur[0] = i; let rowMin = cur[0];
+    for (let j = 1; j <= lb; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, prev2[j - 2] + 1);
+      cur[j] = v; if (v < rowMin) rowMin = v;
+    }
+    if (rowMin > max) return max + 1;
+    prev2 = prev; prev = cur; cur = new Array(lb + 1);
+  }
+  return prev[lb];
+}
+function wordsHave(words, tk) {
+  const L = tk.length, maxE = L >= 8 ? 2 : 1;
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i], d = w.length - L;
+    if (d >= -2 && d <= 2 && ed(w, tk, maxE) <= maxE) return true;
+    if (d > 0 && ed(w.slice(0, L), tk, maxE) <= maxE) return true;
+  }
+  return false;
+}
+
+/* ---------- CSV ---------- */
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c;
+    } else if (c === '"' && cur === '') q = true;
+    else if (c === ',') { row.push(cur); cur = ''; }
+    else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+    else if (c !== '\r') cur += c;
+  }
+  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+function readSource(name, text) {
+  const all = parseCSV(text);
+  if (!all.length) throw new Error('The file is empty.');
+  const hdr = all[0].map((h) => h.trim());
+  const ix = (n) => hdr.indexOf(n);
+  if (ix('release_id') < 0 || ix('Artist') < 0 || ix('Title') < 0) throw new Error('This does not look like a Discogs export (release_id, Artist or Title column missing).');
+  const type = ix('CollectionFolder') >= 0 ? 'collection' : 'wantlist';
+  const rows = [];
+  for (let i = 1; i < all.length; i++) {
+    const r = all[i];
+    const id = parseInt(r[ix('release_id')], 10);
+    if (!id) continue;
+    const x = { id, a: r[ix('Artist')] || '', t: r[ix('Title')] || '', f: r[ix('Format')] || '' };
+    if (type === 'collection') {
+      x.fo = (r[ix('CollectionFolder')] || '').trim() || 'Uncategorized';
+      x.da = r[ix('Date Added')] || '';
+    } else {
+      x.n = (r[ix('Notes')] || '').trim();
+      const di = ix('Date Added');
+      x.da = di >= 0 ? (r[di] || '') : (r.length > hdr.length ? r[hdr.length] : '');
+    }
+    rows.push(x);
+  }
+  return { type, name, at: Date.now(), rows, unique: new Set(rows.map((x) => x.id)).size };
+}
+
+/* ---------- classification: 7 types ---------- */
+function classify(fmt, artist) {
+  const base = String(fmt || '').split(',').map((s) => s.trim().replace(/^\d+x/i, ''));
+  const has = (re) => base.some((b) => re.test(b));
+  if (has(/^CDr?$/i)) return has(/^(Single|Maxi)$/i) ? 'singlecd' : 'cd';
+  if (has(/^(Cass|File|Acetate|Lathe Cut|Lathe|DVD|DVDr|VHS|MiniDisc|8-Track Cartridge|Reel-To-Reel|Cylinder|DAT|Memory Stick)/i)) return 'other';
+  if (/^various/i.test(String(artist || ''))) return 'comp';
+  if (has(/^(LP|EP|Album|Mini-Album|Comp)$/i) || has(/Album/i)) return 'album';
+  if (has(/^7"$/)) return 'single';
+  if (has(/^(12|10)"$/)) return 'maxi';
+  return 'other';
+}
+const CAT = { single: 'Single', maxi: 'Maxi-single', album: 'Album', comp: 'Compilation', cd: 'CD', singlecd: 'Single CD', other: 'Other' };
+const SHOW_RELEASE = { album: 1, comp: 1, cd: 1, other: 1 };
+
+/* ---------- icons ---------- */
+const BG = '#1E1B17';
+const ICOL = { collection: '#86E39A', want: '#FFC15E', both: '#86E39A', plain: '#F3EEE6' };
+function iconHTML(kind, state, px) {
+  const c = ICOL[state] || ICOL.plain, filled = state === 'collection' || state === 'both';
+  const fl = filled ? c : BG, dt = filled ? BG : c;
+  const sh = `fill="${fl}" stroke="${dt}"`;
+  const hole = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${BG}" stroke="${dt}" stroke-width="1.2"></circle>`;
+  let s = '';
+  if (kind === 'single') s = `<circle cx="16" cy="16" r="9.5" ${sh} stroke-width="1.8"></circle><circle cx="16" cy="16" r="3.8" fill="${BG}" stroke="${dt}" stroke-width="1.8"></circle>`;
+  else if (kind === 'maxi') s = `<circle cx="16" cy="16" r="13" ${sh} stroke-width="1.8"></circle><circle cx="16" cy="16" r="9" fill="none" stroke="${dt}" stroke-width="1.4"></circle><circle cx="16" cy="16" r="5" fill="none" stroke="${dt}" stroke-width="1.4"></circle>${hole(16, 16, 1.7)}`;
+  else if (kind === 'album') s = `<circle cx="24.5" cy="16" r="6.8" ${sh} stroke-width="1.8"></circle>${hole(24.5, 16, 1.5)}<rect x="2" y="7" width="18" height="18" rx="2.5" ${sh} stroke-width="1.8"></rect>`;
+  else if (kind === 'comp') s = `<rect x="7" y="3" width="15" height="15" rx="2" ${sh} stroke-width="1.8"></rect><circle cx="25" cy="19" r="6" ${sh} stroke-width="1.8"></circle>${hole(25, 19, 1.4)}<rect x="2" y="10" width="17" height="17" rx="2.5" ${sh} stroke-width="1.8"></rect>`;
+  else if (kind === 'cd') s = `<rect x="3" y="3" width="26" height="26" rx="3" ${sh} stroke-width="1.8"></rect><path d="M8.5 4.5v23" fill="none" stroke="${dt}" stroke-width="1.4"></path><circle cx="18.5" cy="16" r="8" fill="${BG}" stroke="${dt}" stroke-width="1.4"></circle><circle cx="18.5" cy="16" r="2.6" fill="${fl}" stroke="${dt}" stroke-width="1.4"></circle>`;
+  else if (kind === 'singlecd') s = `<circle cx="16" cy="16" r="10.5" ${sh} stroke-width="1.8"></circle><circle cx="16" cy="16" r="5" fill="none" stroke="${dt}" stroke-width="1.4"></circle>${hole(16, 16, 1.6)}<path d="M8.2 13.5A8.3 8.3 0 0 1 12.6 8.2" fill="none" stroke="${dt}" stroke-width="1.4" stroke-linecap="round"></path>`;
+  else s = `<circle cx="16" cy="16" r="11.5" ${sh} stroke-width="1.8" stroke-dasharray="3.4 3"></circle><circle cx="10.5" cy="16" r="1.7" fill="${dt}"></circle><circle cx="16" cy="16" r="1.7" fill="${dt}"></circle><circle cx="21.5" cy="16" r="1.7" fill="${dt}"></circle>`;
+  return `<span class="ico" style="width:${px}px;height:${px}px"><svg width="${px}" height="${px}" viewBox="0 0 32 32" aria-hidden="true">${s}</svg>${state === 'both' ? '<i class="dot"></i>' : ''}</span>`;
+}
+const NOTE_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A9A196" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l11-2v12"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="17.5" cy="16" r="2.5"></circle></svg>';
+const CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
+const ALERT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>';
+const TICK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D8D1C6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
+const EXT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg>';
+
+/* ---------- IndexedDB ---------- */
+let IDB = null;
+function openDB() {
+  return new Promise((res, rej) => {
+    const q = indexedDB.open('vinyl-collection', 1);
+    q.onupgradeneeded = () => {
+      const d = q.result;
+      d.createObjectStore('records', { keyPath: 'id' });
+      d.createObjectStore('tracks', { keyPath: 'id' });
+      d.createObjectStore('meta', { keyPath: 'k' });
+    };
+    q.onsuccess = () => res(q.result);
+    q.onerror = () => rej(q.error);
+  });
+}
+const reqP = (r) => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const txDone = (t) => new Promise((res, rej) => { t.oncomplete = () => res(); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); });
+const idbAll = (store) => reqP(IDB.transaction(store).objectStore(store).getAll());
+async function idbPutMany(store, items, clear) {
+  const t = IDB.transaction(store, 'readwrite'); const os = t.objectStore(store);
+  if (clear) os.clear();
+  items.forEach((x) => os.put(x));
+  return txDone(t);
+}
+async function metaGet(k, d) { const r = await reqP(IDB.transaction('meta').objectStore('meta').get(k)); return r ? r.v : d; }
+async function metaSet(k, v) { const t = IDB.transaction('meta', 'readwrite'); t.objectStore('meta').put({ k, v }); return txDone(t); }
+
+/* ---------- state ---------- */
+let DB = [];                         // hydrated records
+let SRC = { collection: null, wantlist: null };   // stored CSV sources
+let PICK = {};                       // newly chosen, not imported yet
+let SETTINGS = { folders: {} };      // folder flags
+let META = { lastImport: 0 };
+let TOKEN = lsGet('dtoken', '');
+let SW_READY = false;
+let busy = false;
+const S = { q: '', mode: lsGet('mode', 'both'), includeInactive: false, legend: false, view: 'search' };
+const F = { state: 'idle', msg: '', recent: [], loop: false, errs: 0, wake: null };
+
+function hydrate(r, te) {
+  const artist = cleanArtist(r.artist);
+  const h = normFull(artist + ' ' + r.title);
+  const o = Object.assign({}, r, { artist, h, w: h.split(' '), tracks: [], done: false, trkAt: 0, url: 'https://www.discogs.com/release/' + r.id });
+  if (te) {
+    o.done = true; o.trkAt = te.at || 0;
+    o.tracks = (te.t || []).map((x) => { const th = normFull(x[0] + ' ' + (x[1] || '')); return { t: x[0], a: x[1] || '', h: th, w: th.split(' ') }; });
+  }
+  return o;
+}
+async function loadDB() {
+  const [recs, trks] = await Promise.all([idbAll('records'), idbAll('tracks')]);
+  const tm = new Map(trks.map((t) => [t.id, t]));
+  DB = recs.map((r) => hydrate(r, tm.get(r.id)));
+  DB.sort((a, b) => (a.h < b.h ? -1 : a.h > b.h ? 1 : 0));
+  F.recent = DB.filter((r) => r.done && r.trkAt).sort((a, b) => b.trkAt - a.trkAt).slice(0, 3).map((r) => ({ artist: r.artist, title: r.title }));
+}
+const pendingCount = () => { let n = 0; for (const r of DB) if (!r.done) n++; return n; };
+
+function buildRecords(src, settings) {
+  const map = new Map();
+  const mk = (x) => ({ id: x.id, artist: x.a, title: x.t, fmt: x.f, kind: classify(x.f, x.a), inC: false, inW: false, folders: [], note: '', added: x.da || '' });
+  if (src.collection) for (const x of src.collection.rows) {
+    const st = settings.folders[x.fo];
+    if (st && !st.inApp) continue;
+    let r = map.get(x.id); if (!r) { r = mk(x); map.set(x.id, r); }
+    r.inC = true; if (r.folders.indexOf(x.fo) < 0) r.folders.push(x.fo);
+  }
+  if (src.wantlist) for (const x of src.wantlist.rows) {
+    let r = map.get(x.id); if (!r) { r = mk(x); map.set(x.id, r); }
+    r.inW = true; r.note = x.n || '';
+  }
+  return Array.from(map.values());
+}
+
+/* folder list from the collection source (picked or stored) */
+let folderCache = { key: null, list: [] };
+function folderList() {
+  const col = PICK.collection || SRC.collection;
+  if (!col) return [];
+  if (folderCache.key === col) return folderCache.list;
+  const m = new Map();
+  col.rows.forEach((x) => { let f = m.get(x.fo); if (!f) { f = { name: x.fo, ids: new Set() }; m.set(x.fo, f); } f.ids.add(x.id); });
+  const list = Array.from(m.values()).map((f) => ({ name: f.name, count: f.ids.size })).sort((a, b) => b.count - a.count || (a.name < b.name ? -1 : 1));
+  folderCache = { key: col, list };
+  return list;
+}
+function ensureFolderSettings() {
+  folderList().forEach((f) => { if (!SETTINGS.folders[f.name]) SETTINGS.folders[f.name] = { inApp: true, inSearch: true }; });
+}
+function folderStats() {
+  const list = folderList();
+  let app = 0, search = 0;
+  list.forEach((f) => { const s = SETTINGS.folders[f.name] || { inApp: true, inSearch: true }; if (s.inApp) { app++; if (s.inSearch) search++; } });
+  return { total: list.length, app, search };
+}
+const folderInDB = (name) => DB.some((r) => r.folders.indexOf(name) >= 0);
+
+/* ---------- search ---------- */
+const toks = (q) => normFull(q).split(' ').filter(Boolean);
+function tokOk(tk, h, words, fuzzy) { return h.indexOf(tk) !== -1 || (fuzzy && tk.length >= 4 && wordsHave(words, tk)); }
+function matchRec(r, tokens, fuzzy) {
+  if (tokens.every((tk) => tokOk(tk, r.h, r.w, fuzzy))) return { r, t: null };
+  for (let i = 0; i < r.tracks.length; i++) {
+    const t = r.tracks[i];
+    if (tokens.every((tk) => tokOk(tk, r.h, r.w, fuzzy) || tokOk(tk, t.h, t.w, fuzzy))) return { r, t };
+  }
+  return null;
+}
+function isInactive(r) {
+  const viaC = r.inC && S.mode !== 'wantlist', viaW = r.inW && S.mode !== 'collection';
+  if (viaW || !viaC) return false;
+  return r.folders.length > 0 && r.folders.every((f) => { const s = SETTINGS.folders[f]; return s && !s.inSearch; });
+}
+function scoreOf(m, tokens, fuzzy) {
+  let s = m.t ? 40 : 100;
+  const h = ' ' + (m.t ? m.r.h + ' ' + m.t.h : m.r.h);
+  for (const tk of tokens) { if (h.indexOf(' ' + tk + ' ') >= 0) s += 6; else if (h.indexOf(' ' + tk) >= 0) s += 4; else s += 1; }
+  if (!fuzzy && m.r.h.indexOf(tokens[0]) === 0) s += 3;
+  if (fuzzy) s -= 30;
+  return s;
+}
+function runSearch(tokens) {
+  const eligible = (r) => S.mode === 'both' || (S.mode === 'collection' ? r.inC : r.inW);
+  const hits = [], seen = new Set();
+  const collect = (fuzzy) => {
+    for (const r of DB) {
+      if (seen.has(r.id) || !eligible(r)) continue;
+      const m = matchRec(r, tokens, fuzzy);
+      if (m) { seen.add(r.id); hits.push({ m, fuzzy }); }
+    }
+  };
+  collect(false);
+  const visible = hits.filter((h) => S.includeInactive || !isInactive(h.m.r)).length;
+  if (visible < 6 && tokens.some((t) => t.length >= 4)) collect(true);
+  let hidden = 0, shownInactive = 0; const items = [];
+  for (const { m, fuzzy } of hits) {
+    const inactive = isInactive(m.r);
+    if (inactive && !S.includeInactive) { hidden++; continue; }
+    if (inactive) shownInactive++;
+    const r = m.r, t = m.t;
+    const state = r.inC && r.inW ? 'both' : (r.inC ? 'collection' : 'want');
+    const primary = t ? t.t : r.title;
+    const who = t && t.a && /^various/i.test(r.artist) ? t.a : r.artist;
+    const listName = state === 'both' ? 'in Collection and Wantlist' : (state === 'collection' ? 'in Collection' : 'in Wantlist');
+    items.push({
+      kind: r.kind, state, primary, isTrack: !!t,
+      secondary: who + (inactive ? ' · ' + r.folders[0] : ''),
+      release: t && SHOW_RELEASE[r.kind] ? r.title : '',
+      note: r.inW ? r.note : '', url: r.url,
+      aria: 'Open on Discogs: ' + primary + ', ' + CAT[r.kind] + ', ' + listName,
+      score: scoreOf(m, tokens, fuzzy)
+    });
+  }
+  items.sort((a, b) => b.score - a.score);
+  return { items, hidden, shownInactive };
+}
+
+/* ---------- status pill ---------- */
+function statusInfo() {
+  const n = DB.length, pending = pendingCount();
+  if (!n) return { ok: false, text: 'Offline', aria: 'Offline not ready: no data yet. Open update' };
+  if (pending > 0) { const pct = Math.floor(100 * (n - pending) / n); return { ok: false, text: 'Offline ' + pct + '%', aria: 'Offline not ready, ' + pct + ' percent. Open update' }; }
+  if (!SW_READY) return { ok: false, text: 'Offline', aria: 'Offline not ready: the app is not cached yet' };
+  return { ok: true, text: 'Offline', aria: 'Offline ready. Open update' };
+}
+function pillHTML(link) {
+  const s = statusInfo(), cls = 'pill ' + (s.ok ? 'ok' : 'bad'), inner = (s.ok ? CHECK : ALERT) + esc(s.text);
+  return link
+    ? `<a class="pillwrap" href="#update" data-go="update" aria-label="${esc(s.aria)}"><span class="${cls}">${inner}</span></a>`
+    : `<span class="pillwrap"><span class="${cls}" role="status" aria-label="${esc(s.aria)}">${inner}</span></span>`;
+}
+function renderPills() {
+  $('#pill-search').innerHTML = pillHTML(true);
+  $('#pill-update').innerHTML = pillHTML(false);
+  $('#pill-progress').innerHTML = pillHTML(false);
+}
+
+/* ---------- search view ---------- */
+const LEGEND_STATES = [['collection', 'Collection', 'filled'], ['want', 'Wantlist', 'outline'], ['both', 'In both', 'dot']];
+const LEGEND_KINDS = [['single', 'Single', '7 inch'], ['maxi', 'Maxi-single', '10 or 12 inch'], ['album', 'Album', 'LP, EP, best-of'], ['comp', 'Compilation', 'Various artists'], ['cd', 'CD', 'Album or compilation'], ['singlecd', 'Single CD', 'Single or maxi'], ['other', 'Other', 'Cassette, acetate, file']];
+function legendHTML() {
+  return `<div class="card"><div class="lab">LIST</div><div class="legendgrid3">${LEGEND_STATES.map((s) => `<div>${iconHTML('album', s[0], 30)}<div class="lt" style="font-size:13px">${s[1]}</div><div class="ls">${s[2]}</div></div>`).join('')}</div><div class="lab">TYPE</div><div class="legendgrid2">${LEGEND_KINDS.map((k) => `<div>${iconHTML(k[0], 'plain', 28)}<div style="min-width:0"><div class="lt">${k[1]}</div><div class="ls">${k[2]}</div></div></div>`).join('')}</div><div class="small mu">Tap an icon in a result to open that release on Discogs.</div></div>`;
+}
+function rowHTML(x) {
+  return `<div class="row"><a class="ic" href="${esc(x.url)}" target="_blank" rel="noopener" aria-label="${esc(x.aria)}">${iconHTML(x.kind, x.state, 30)}</a><div class="rb"><div class="r1">${x.isTrack ? NOTE_SVG : ''}<div class="t clamp2">${esc(x.primary)}</div></div><div class="r2 clamp2">${esc(x.secondary)}</div>${x.release ? `<div class="r2 clamp2">on <span class="rel">${esc(x.release)}</span></div>` : ''}${x.note ? `<div class="note clamp2">Note: ${esc(x.note)}</div>` : ''}</div></div>`;
+}
+function recents() { try { return JSON.parse(lsGet('recents', '[]')); } catch (e) { return []; } }
+function pushRecent(q) {
+  q = q.trim(); if (q.length < 3) return;
+  const l = recents().filter((x) => x !== q); l.unshift(q); lsSet('recents', JSON.stringify(l.slice(0, 6)));
+}
+let lastQ = null;
+function renderSearch() {
+  const tokens = toks(S.q), idle = tokens.length === 0;
+  $('#sub').textContent = META.lastImport ? 'Updated ' + fmtDate(META.lastImport) + ' · ' + fmtN(DB.length) + ' records' : 'No data yet';
+  $('#clear').hidden = S.q.length === 0;
+  $$('.mode').forEach((b) => { const on = b.dataset.mode === S.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  $('#b-legend').setAttribute('aria-pressed', S.legend);
+  $('#discogs').href = tokens.length ? 'https://www.discogs.com/search/?q=' + encodeURIComponent(S.q.trim()) + '&type=all' : 'https://www.discogs.com/search/';
+  const fs = folderStats();
+  $('#fhint').textContent = S.mode === 'wantlist' ? 'Wantlist has no folders' : (fs.total ? (S.includeInactive ? 'Searching all ' + fs.app + ' folders' : 'Searching ' + fs.search + ' of ' + fs.app + ' folders') : '');
+  let html = '';
+  if (idle || S.legend) html += legendHTML();
+  if (idle) {
+    $('#count').textContent = '';
+    if (!DB.length) html += `<div class="empty"><h2>No records yet</h2><div class="small mu">Import your Discogs CSV files to start searching, even without internet.</div><a class="ybtn" href="#update" data-go="update" style="background:var(--tx)">Open Update</a></div>`;
+    else {
+      const rc = recents();
+      if (rc.length) html += `<div class="sec"><div class="lab">RECENT SEARCHES</div><div class="chips">${rc.map((x) => `<button class="chip" data-chip="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
+    }
+  } else {
+    const R = runSearch(tokens), n = R.items.length;
+    $('#count').textContent = n + (n === 1 ? ' result' : ' results');
+    if (S.mode !== 'wantlist' && ((!S.includeInactive && R.hidden > 0) || (S.includeInactive && R.shownInactive > 0))) {
+      html += `<button class="dash" data-toggle-inactive>${S.includeInactive ? 'Showing hits from inactive folders · tap to hide' : '+' + R.hidden + (R.hidden === 1 ? ' hit' : ' hits') + ' in inactive folders · tap to include'}</button>`;
+    }
+    if (n) {
+      html += `<div class="list">${R.items.slice(0, 150).map(rowHTML).join('')}</div>`;
+      if (n > 150) html += `<div class="small mu center">Showing the first 150 of ${fmtN(n)} results. Type more to narrow it down.</div>`;
+    } else {
+      html += `<div class="empty"><h2>No hits</h2><div class="small mu">Nothing in the active folders or the Wantlist for this search.</div><a class="ybtn" href="${esc($('#discogs').href)}" target="_blank" rel="noopener">Search on Discogs ${EXT}</a></div>`;
+    }
+  }
+  $('#results').innerHTML = html;
+  if (lastQ !== S.q) { $('#results').scrollTop = 0; lastQ = S.q; }
+}
+
+/* ---------- update view ---------- */
+function fileCard(label, src, id) {
+  const info = src ? (src.type === 'collection' ? fmtN(src.rows.length) + ' rows · ' + fmtN(src.unique) + ' unique records' : fmtN(src.unique) + ' records') : 'No file chosen';
+  const isNew = src && ((label === 'Collection' && PICK.collection) || (label === 'Wantlist' && PICK.wantlist));
+  return `<div class="fcard"><div class="fb"><div style="font-size:15px;font-weight:600">${label}</div><div class="fname">${src ? esc(src.name) : 'Choose the CSV exported from Discogs'}</div><div class="small" style="color:var(--tx2);font-weight:500">${info}${isNew ? ' · not imported yet' : ''}</div></div><label class="btn">${src ? 'Change' : 'Choose'}<input type="file" id="${id}" accept=".csv,text/csv,text/plain"></label></div>`;
+}
+function renderUpdate() {
+  const col = PICK.collection || SRC.collection, want = PICK.wantlist || SRC.wantlist;
+  $('#u-files').innerHTML = fileCard('Collection', col, 'f-col') + fileCard('Wantlist', want, 'f-want');
+  $('#tok-state').textContent = TOKEN ? 'Token saved on this device.' : 'No token. Fetching still works, just slower.';
+  if (document.activeElement !== $('#token')) $('#token').value = TOKEN;
+  const list = folderList(), fs = folderStats();
+  $('#f-sum').textContent = list.length ? fs.app + ' in app · ' + fs.search + ' in search' : '';
+  if (!list.length) {
+    $('#u-folders').innerHTML = '<div class="card small mu">Choose the Collection CSV to see your folders.</div>';
+  } else {
+    $('#u-folders').innerHTML = `<div class="ftable"><div class="fhead"><div style="flex:1">Folder</div><div style="width:72px;text-align:center">In app</div><div style="width:72px;text-align:center">In search</div></div>${list.map((f, i) => {
+      const s = SETTINGS.folders[f.name] || { inApp: true, inSearch: true };
+      const rm = !s.inApp && folderInDB(f.name);
+      return `<div class="frow"><div class="fn"><div style="font-size:15px;font-weight:500;line-height:1.25;overflow-wrap:anywhere">${esc(f.name)}</div><div class="small mu">${fmtN(f.count)} ${f.count === 1 ? 'record' : 'records'}</div>${rm ? '<div class="rm">Removed from the app on update</div>' : ''}</div><label class="cbx a"><input type="checkbox" data-fi="${i}" data-k="app" ${s.inApp ? 'checked' : ''} aria-label="${esc(f.name)}: include in app"></label><label class="cbx s"><input type="checkbox" data-fi="${i}" data-k="search" ${s.inApp && s.inSearch ? 'checked' : ''} ${s.inApp ? '' : 'disabled'} aria-label="${esc(f.name)}: include in search"></label></div>`;
+    }).join('')}</div>`;
+  }
+  const hasSrc = !!(col || want), online = navigator.onLine !== false;
+  const b = $('#b-import');
+  b.disabled = !hasSrc || !online || busy;
+  b.textContent = busy ? 'Importing…' : (hasSrc ? 'Import and fetch tracklists' : 'Choose the CSV files first');
+  $('#import-note').textContent = !online ? 'No internet connection. Connect to Wi-Fi or mobile data to update.' : 'Only new records are fetched. What is already in the app is kept.';
+}
+
+async function onPick(file) {
+  try {
+    const src = readSource(file.name, await file.text());
+    PICK[src.type] = src;
+    if (src.type === 'collection') ensureFolderSettings();
+    renderUpdate();
+  } catch (e) {
+    $('#import-note').textContent = 'Could not read ' + file.name + ': ' + e.message;
+  }
+}
+async function doImport() {
+  if (busy) return; busy = true; renderUpdate();
+  try {
+    const src = { collection: PICK.collection || SRC.collection, wantlist: PICK.wantlist || SRC.wantlist };
+    SRC = src; PICK = {};
+    ensureFolderSettings();
+    await metaSet('src', src); await metaSet('settings', SETTINGS);
+    const recs = buildRecords(src, SETTINGS);
+    await idbPutMany('records', recs, true);
+    META.lastImport = Date.now(); await metaSet('lastImport', META.lastImport);
+    await loadDB();
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* ignore */ }
+  } finally { busy = false; }
+  renderAll();
+  if (pendingCount() > 0) { go('progress'); startFetch(); } else { F.state = 'done'; await setFlag('done'); go('search'); }
+}
+
+/* ---------- tracklists ---------- */
+function parseTracklist(j) {
+  const out = [];
+  const nm = (x) => (x.artists || []).map((a) => cleanArtist(a.anv || a.name)).filter(Boolean).join(' & ');
+  const walk = (list) => {
+    (list || []).forEach((x) => {
+      if (x.type_ === 'heading') return;
+      if (x.type_ === 'index' || (x.sub_tracks && x.sub_tracks.length)) { if (x.title) out.push({ t: x.title, a: nm(x) }); walk(x.sub_tracks); return; }
+      if (x.title) out.push({ t: x.title, a: nm(x) });
+    });
+  };
+  walk(j && j.tracklist);
+  return out;
+}
+async function setFlag(state) { try { await metaSet('fetchFlag', { state, at: Date.now() }); } catch (e) { /* ignore */ } }
+async function lockScreen() {
+  try { if (navigator.wakeLock && !F.wake) { F.wake = await navigator.wakeLock.request('screen'); F.wake.addEventListener('release', () => { F.wake = null; }); } } catch (e) { /* ignore */ }
+}
+function unlockScreen() { try { if (F.wake) F.wake.release(); } catch (e) { /* ignore */ } F.wake = null; }
+async function saveTracks(r, list, e) {
+  await idbPutMany('tracks', [{ id: r.id, t: list.map((x) => [x.t, x.a]), at: Date.now(), e }], false);
+  const h = hydrate(r, { t: list.map((x) => [x.t, x.a]), at: Date.now() });
+  r.tracks = h.tracks; r.done = true; r.trkAt = h.trkAt;
+  F.recent.unshift({ artist: r.artist, title: r.title }); F.recent = F.recent.slice(0, 3);
+}
+const interval = () => (FAST ? 5 : (TOKEN ? 1150 : 2600));
+function pauseFetch(msg, state) { F.state = state || 'paused'; F.msg = msg || ''; setFlag(F.state === 'paused' ? 'paused' : 'idle'); unlockScreen(); }
+async function startFetch() {
+  if (F.loop) return;
+  const queue = DB.filter((r) => !r.done);
+  if (!queue.length) { F.state = 'done'; await setFlag('done'); renderAll(); return; }
+  F.loop = true; F.state = 'running'; F.msg = ''; F.errs = 0;
+  await setFlag('running'); lockScreen(); renderAll();
+  let qi = 0;
+  try {
+    while (F.state === 'running' && qi < queue.length) {
+      const r = queue[qi];
+      if (r.done) { qi++; continue; }
+      let res;
+      try {
+        res = await fetch('https://api.discogs.com/releases/' + r.id + (TOKEN ? '?token=' + encodeURIComponent(TOKEN) : ''));
+      } catch (e) {
+        F.errs++;
+        if (F.errs >= 5) { pauseFetch('Connection lost. Resume when you are online.'); break; }
+        await sleep(FAST ? 20 : Math.min(3000 * F.errs, 15000)); continue;
+      }
+      if (res.status === 429) { F.msg = 'Rate limit reached. Waiting a minute…'; renderLive(); await sleep(FAST ? 50 : 65000); F.msg = ''; continue; }
+      if (res.status === 401 || res.status === 403) { pauseFetch('Discogs rejected the token. Check it on the Update screen.'); break; }
+      if (res.status === 404) { await saveTracks(r, [], 'e404'); qi++; F.errs = 0; }
+      else if (!res.ok) { F.errs++; if (F.errs >= 5) { pauseFetch('Discogs returned an error (' + res.status + '). Try again later.'); break; } await sleep(FAST ? 20 : 3000); continue; }
+      else {
+        let j; try { j = await res.json(); } catch (e) { F.errs++; if (F.errs >= 5) { pauseFetch('Unexpected answer from Discogs.'); break; } continue; }
+        await saveTracks(r, parseTracklist(j), 'ok'); qi++; F.errs = 0;
+      }
+      renderLive();
+      await sleep(interval());
+    }
+    if (F.state === 'running' && qi >= queue.length) { F.state = 'done'; await setFlag('done'); unlockScreen(); }
+  } finally { F.loop = false; renderAll(); }
+}
+
+let liveQueued = false;
+function renderLive() {
+  if (liveQueued) return; liveQueued = true;
+  requestAnimationFrame(() => { liveQueued = false; renderPills(); if (S.view === 'progress') renderProgress(); if (S.view === 'search' && lastQ !== null) { /* keep search stable while fetching */ } });
+}
+function renderProgress() {
+  const n = DB.length, pending = pendingCount(), done = n - pending, pct = n ? Math.floor(100 * done / n) : 0;
+  const online = navigator.onLine !== false, st = F.state;
+  let banner = '';
+  if (!n) banner = `<div class="banner"><div><b>Nothing to fetch yet</b>Import your CSV files on the Update screen first.</div></div>`;
+  else if (st === 'interrupted') banner = `<div class="banner bad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF9A9A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg><div><b>Interrupted</b>The app stopped at record ${fmtN(done)}. Tap Resume to continue exactly there. Until all tracklists are in, some track hits will be missing.</div></div>`;
+  else if (st === 'running') banner = `<div class="banner"><div><b>Fetching…</b>${esc(F.msg || 'Tracklists are saved as they arrive, so you can already search what has been fetched.')}</div></div>`;
+  else if (st === 'paused') banner = `<div class="banner"><div><b>Paused</b>${esc(F.msg || 'Tap Resume to continue where you stopped.')}</div></div>`;
+  else if (pending === 0) banner = `<div class="banner good"><div><b>All tracklists are in</b>Offline search is complete.</div></div>`;
+  else banner = `<div class="banner"><div><b>${fmtN(pending)} tracklists to fetch</b>Tap Resume to start.</div></div>`;
+  $('#p-banner').innerHTML = banner;
+  const mins = Math.ceil(pending * interval() / 60000);
+  $('#p-big').innerHTML = n ? `<div class="big"><div class="tr"><div class="pct">${pct}%</div><div class="small mu" style="font-size:14px">${fmtN(done)} of ${fmtN(n)} records</div></div><div class="track" role="progressbar" aria-label="Tracklist progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div><div class="tr small mu" style="font-size:14px"><span>${fmtN(pending)} to go</span><span>${pending ? (mins <= 1 ? 'about a minute' : 'about ' + fmtN(mins) + ' minutes') : 'done'}</span></div></div>` : '';
+  $('#p-recent').innerHTML = F.recent.length ? `<div class="lab">LAST FETCHED</div><div class="ftable">${F.recent.map((x) => `<div class="recent">${TICK}<div style="flex:1;min-width:0">${esc(x.artist)} – ${esc(x.title)}</div></div>`).join('')}</div><a href="#search" data-go="search" class="small" style="display:flex;align-items:center;min-height:44px;text-decoration:underline">You can already search what has been fetched</a>` : '';
+  const b = $('#b-fetch');
+  if (!n) { b.textContent = 'Go to Update'; b.disabled = false; b.className = 'pbtn'; b.dataset.act = 'update'; }
+  else if (st === 'running') { b.textContent = 'Pause'; b.disabled = false; b.className = 'sbtn'; b.dataset.act = 'pause'; }
+  else if (pending === 0) { b.textContent = 'Back to search'; b.disabled = false; b.className = 'pbtn'; b.dataset.act = 'search'; }
+  else { b.textContent = 'Resume from record ' + fmtN(done + 1); b.disabled = !online; b.className = 'pbtn'; b.dataset.act = 'resume'; }
+  $('#p-note').textContent = !online && pending ? 'No internet connection. Connect to Wi-Fi or mobile data to resume.' : (st === 'running' ? 'Keep the app open and the screen on while fetching. iOS may pause the download if you switch to another app.' : '');
+}
+
+/* ---------- navigation and rendering ---------- */
+function go(view) {
+  S.view = view;
+  $$('.view').forEach((v) => v.classList.toggle('active', v.id === 'v-' + view));
+  renderAll();
+}
+function renderAll() {
+  renderPills();
+  if (S.view === 'search') renderSearch();
+  if (S.view === 'update') renderUpdate();
+  if (S.view === 'progress') renderProgress();
+}
+
+/* ---------- events ---------- */
+let qTimer = null, rTimer = null;
+$('#q').addEventListener('input', (e) => {
+  S.q = e.target.value; S.includeInactive = false;
+  renderSearch();
+  clearTimeout(rTimer); rTimer = setTimeout(() => pushRecent(S.q), 2000);
+});
+$('#clear').addEventListener('click', () => { S.q = ''; $('#q').value = ''; renderSearch(); $('#q').focus(); });
+$('#b-legend').addEventListener('click', () => { S.legend = !S.legend; renderSearch(); });
+$$('.mode').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; lsSet('mode', S.mode); S.includeInactive = false; renderSearch(); }));
+document.addEventListener('click', (e) => {
+  const g = e.target.closest('[data-go]');
+  if (g) { e.preventDefault(); go(g.dataset.go); return; }
+  const c = e.target.closest('[data-chip]');
+  if (c) { S.q = c.dataset.chip; $('#q').value = S.q; renderSearch(); return; }
+  if (e.target.closest('[data-toggle-inactive]')) { S.includeInactive = !S.includeInactive; renderSearch(); }
+});
+$('#u-files').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) onPick(f); });
+$('#u-folders').addEventListener('change', async (e) => {
+  const el = e.target; if (!el.dataset || el.dataset.fi === undefined) return;
+  const f = folderList()[+el.dataset.fi]; if (!f) return;
+  const s = SETTINGS.folders[f.name] || (SETTINGS.folders[f.name] = { inApp: true, inSearch: true });
+  if (el.dataset.k === 'app') s.inApp = el.checked; else s.inSearch = el.checked;
+  await metaSet('settings', SETTINGS);
+  renderUpdate();
+});
+$('#tok-save').addEventListener('click', () => { TOKEN = $('#token').value.trim(); lsSet('dtoken', TOKEN); renderUpdate(); });
+$('#b-import').addEventListener('click', doImport);
+let clearArmed = false;
+$('#b-clear').addEventListener('click', async () => {
+  if (!clearArmed) { clearArmed = true; $('#b-clear').textContent = 'Tap again to delete all data on this device'; setTimeout(() => { clearArmed = false; $('#b-clear').textContent = 'Clear all data'; }, 4000); return; }
+  clearArmed = false; $('#b-clear').textContent = 'Clear all data';
+  F.state = 'idle'; unlockScreen();
+  await idbPutMany('records', [], true); await idbPutMany('tracks', [], true); await idbPutMany('meta', [], true);
+  DB = []; SRC = { collection: null, wantlist: null }; PICK = {}; SETTINGS = { folders: {} }; META = { lastImport: 0 }; F.recent = [];
+  renderAll();
+});
+$('#b-fetch').addEventListener('click', () => {
+  const a = $('#b-fetch').dataset.act;
+  if (a === 'pause') { F.state = 'paused'; F.msg = ''; setFlag('paused'); unlockScreen(); renderAll(); }
+  else if (a === 'resume') startFetch();
+  else go(a === 'update' ? 'update' : 'search');
+});
+window.addEventListener('online', renderAll);
+window.addEventListener('offline', renderAll);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && F.state === 'running') lockScreen(); });
+
+/* ---------- start ---------- */
+async function init() {
+  try {
+    IDB = await openDB();
+    SRC = await metaGet('src', { collection: null, wantlist: null });
+    SETTINGS = await metaGet('settings', { folders: {} });
+    META.lastImport = await metaGet('lastImport', 0);
+    await loadDB();
+    const flag = await metaGet('fetchFlag', null);
+    const pending = pendingCount();
+    if (DB.length && pending === 0) F.state = 'done';
+    else if (flag && flag.state === 'running' && pending > 0) F.state = 'interrupted';
+    else if (flag && flag.state === 'paused' && pending > 0) F.state = 'paused';
+  } catch (e) {
+    $('#results').innerHTML = '<div class="empty"><h2>Storage unavailable</h2><div class="small mu">This browser does not allow the app to store data. Open it from the home screen, outside private browsing.</div></div>';
+    return;
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.ready.then(() => { SW_READY = true; renderPills(); }).catch(() => {});
+  }
+  const h = location.hash.replace('#', '');
+  go(h === 'update' || h === 'progress' ? h : 'search');
+}
+window.__vc = { get db() { return DB; }, classify, parseCSV, norm: normFull, S, F, go, settings: () => SETTINGS };
+init();
+})();
+</script>
+</body>
+</html>
