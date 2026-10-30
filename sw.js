@@ -1,5 +1,5 @@
-/* Vinyl Collection service worker (v1.4): app shell cached for offline use. The page itself is fetched network-first, so a new version shows up on the next open. */
-const CACHE = 'vinyl-collection-1.4';
+/* Vinyl Collection service worker (v1.5): app shell cached for offline use. The page itself is fetched network-first, so a new version shows up on the next open. */
+const CACHE = 'vinyl-collection-1.5';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {

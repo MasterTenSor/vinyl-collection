@@ -31,4 +31,4 @@ Plak je personal access token op het Update-scherm. Met token 60 aanvragen per m
 - Of de data bewaard blijft na dagen niet gebruiken (de app vraagt iOS om persistente opslag).
 
 ## Belangrijk: verwijder de app niet
-Op iPhone heeft de app op het beginscherm een eigen, aparte opslag (los van Safari). Verwijder je de app, dan is de database weg. Een nieuwe versie van de app komt vanzelf binnen: upload de nieuwe bestanden en open de app twee keer. Rechtsboven in het zoekscherm staat het versienummer (nu v1.4).
+Op iPhone heeft de app op het beginscherm een eigen, aparte opslag (los van Safari). Verwijder je de app, dan is de database weg. Een nieuwe versie van de app komt vanzelf binnen: upload de nieuwe bestanden en open de app twee keer. Rechtsboven in het zoekscherm staat het versienummer (nu v1.5).

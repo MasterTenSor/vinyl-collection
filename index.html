@@ -256,7 +256,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
-const VERSION = 'v1.4';
+const VERSION = 'v1.5';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -432,6 +432,7 @@ async function loadDB() {
   const tm = new Map(trks.map((t) => [t.id, t]));
   DB = recs.map((r) => hydrate(r, tm.get(r.id)));
   DB.sort((a, b) => (a.h < b.h ? -1 : a.h > b.h ? 1 : 0));
+  DB.forEach((r, i) => { r.ix = i; });
   F.recent = DB.filter((r) => r.done && r.trkAt).sort((a, b) => b.trkAt - a.trkAt).slice(0, 3).map((r) => ({ artist: r.artist, title: r.title }));
 }
 const pendingCount = () => { let n = 0; for (const r of DB) if (!r.done) n++; return n; };
@@ -478,13 +479,17 @@ const folderInDB = (name) => DB.some((r) => r.folders.indexOf(name) >= 0);
 /* ---------- search ---------- */
 const toks = (q) => normFull(q).split(' ').filter(Boolean);
 function tokOk(tk, h, words, fuzzy) { return h.indexOf(tk) !== -1 || (fuzzy && tk.length >= 4 && wordsHave(words, tk)); }
-function matchRec(r, tokens, fuzzy) {
-  if (tokens.every((tk) => tokOk(tk, r.h, r.w, fuzzy))) return { r, t: null };
+/* One row per track: a track is listed when the search words are covered by the release (artist + title) plus that one track. */
+function matchRows(r, tokens, fuzzy) {
+  if (tokens.every((tk) => tokOk(tk, r.h, r.w, fuzzy))) {
+    return r.tracks.length ? r.tracks.map((t, i) => ({ r, t, ti: i, rel: true })) : [{ r, t: null, ti: 0, rel: true }];
+  }
+  const rows = [];
   for (let i = 0; i < r.tracks.length; i++) {
     const t = r.tracks[i];
-    if (tokens.every((tk) => tokOk(tk, r.h, r.w, fuzzy) || tokOk(tk, t.h, t.w, fuzzy))) return { r, t };
+    if (tokens.every((tk) => tokOk(tk, r.h, r.w, fuzzy) || tokOk(tk, t.h, t.w, fuzzy))) rows.push({ r, t, ti: i, rel: false });
   }
-  return null;
+  return rows;
 }
 function isInactive(r) {
   const viaC = r.inC && S.mode !== 'wantlist', viaW = r.inW && S.mode !== 'collection';
@@ -492,8 +497,8 @@ function isInactive(r) {
   return r.folders.length > 0 && r.folders.every((f) => { const s = SETTINGS.folders[f]; return s && !s.inSearch; });
 }
 function scoreOf(m, tokens, fuzzy) {
-  let s = m.t ? 40 : 100;
-  const h = ' ' + (m.t ? m.r.h + ' ' + m.t.h : m.r.h);
+  let s = m.rel ? 100 : 40;
+  const h = ' ' + (m.rel ? m.r.h : m.r.h + ' ' + m.t.h);
   for (const tk of tokens) { if (h.indexOf(' ' + tk + ' ') >= 0) s += 6; else if (h.indexOf(' ' + tk) >= 0) s += 4; else s += 1; }
   if (!fuzzy && m.r.h.indexOf(tokens[0]) === 0) s += 3;
   if (fuzzy) s -= 30;
@@ -501,37 +506,38 @@ function scoreOf(m, tokens, fuzzy) {
 }
 function runSearch(tokens) {
   const eligible = (r) => S.mode === 'both' || (S.mode === 'collection' ? r.inC : r.inW);
-  const hits = [], seen = new Set();
+  const groups = [], seen = new Set();
   const collect = (fuzzy) => {
     for (const r of DB) {
       if (seen.has(r.id) || !eligible(r)) continue;
-      const m = matchRec(r, tokens, fuzzy);
-      if (m) { seen.add(r.id); hits.push({ m, fuzzy }); }
+      const rows = matchRows(r, tokens, fuzzy);
+      if (rows.length) { seen.add(r.id); groups.push({ rows, fuzzy }); }
     }
   };
   collect(false);
-  const visible = hits.filter((h) => S.includeInactive || !isInactive(h.m.r)).length;
-  if (visible < 6 && tokens.some((t) => t.length >= 4)) collect(true);
+  const visible = () => groups.reduce((n, g) => n + (S.includeInactive || !isInactive(g.rows[0].r) ? g.rows.length : 0), 0);
+  if (visible() < 6 && tokens.some((t) => t.length >= 4)) collect(true);
   let hidden = 0, shownInactive = 0; const items = [];
-  for (const { m, fuzzy } of hits) {
-    const inactive = isInactive(m.r);
-    if (inactive && !S.includeInactive) { hidden++; continue; }
-    if (inactive) shownInactive++;
-    const r = m.r, t = m.t;
+  for (const { rows, fuzzy } of groups) {
+    const r = rows[0].r, inactive = isInactive(r);
+    if (inactive && !S.includeInactive) { hidden += rows.length; continue; }
+    if (inactive) shownInactive += rows.length;
     const state = r.inC && r.inW ? 'both' : (r.inC ? 'collection' : 'want');
-    const primary = t ? t.t : r.title;
-    const who = t && t.a && /^various/i.test(r.artist) ? t.a : r.artist;
     const listName = state === 'both' ? 'in Collection and Wantlist' : (state === 'collection' ? 'in Collection' : 'in Wantlist');
-    items.push({
-      kind: r.kind, state, primary, isTrack: !!t,
-      secondary: who + (inactive ? ' · ' + r.folders[0] : ''),
-      release: t && SHOW_RELEASE[r.kind] ? r.title : '',
-      note: r.inW ? r.note : '', url: r.url,
-      aria: 'Open on Discogs: ' + primary + ', ' + CAT[r.kind] + ', ' + listName,
-      score: scoreOf(m, tokens, fuzzy)
-    });
+    for (const m of rows) {
+      const t = m.t, primary = t ? t.t : r.title;
+      const who = t && t.a && /^various/i.test(r.artist) ? t.a : r.artist;
+      items.push({
+        kind: r.kind, state, primary, isTrack: !m.rel,
+        secondary: who + (inactive ? ' \u00b7 ' + r.folders[0] : ''),
+        release: t && SHOW_RELEASE[r.kind] ? r.title : '',
+        note: r.inW ? r.note : '', url: r.url,
+        aria: 'Open on Discogs: ' + primary + ', ' + CAT[r.kind] + ', ' + listName,
+        score: scoreOf(m, tokens, fuzzy), ix: r.ix, ti: m.ti
+      });
+    }
   }
-  items.sort((a, b) => b.score - a.score);
+  items.sort((a, b) => b.score - a.score || a.ix - b.ix || a.ti - b.ti);
   return { items, hidden, shownInactive };
 }
 
@@ -639,7 +645,8 @@ function renderUpdate() {
   $('#u-diff').textContent = diffInfo();
   $('#tok-state').textContent = TOKEN ? 'Token saved on this device.' : 'No token. Fetching still works, just slower.';
   if (document.activeElement !== $('#token')) $('#token').value = TOKEN;
-  $('#vfoot').textContent = META.lastImport ? 'Last import ' + fmtDate(META.lastImport) : '';
+  const noTrk = DB.filter((r) => r.done && r.tracks.length === 0).length;
+  $('#vfoot').innerHTML = (META.lastImport ? 'Last import ' + esc(fmtDate(META.lastImport)) : '') + (noTrk ? '<br>' + fmtN(noTrk) + (noTrk === 1 ? ' record' : ' records') + ' without tracklist' : '');
   const list = folderList(), fs = folderStats();
   const nm = (a) => a.map((n) => '\u201c' + esc(n) + '\u201d').join(', ');
   $('#u-fchg').innerHTML = UP === 'update' && PICK.collection
@@ -654,7 +661,7 @@ function renderUpdate() {
     $('#u-folders').innerHTML = `<div class="ftable"><div class="fhead"><div style="flex:1">Folder</div><div style="width:72px;text-align:center">In app</div><div style="width:72px;text-align:center">In search</div></div>${list.map((f, i) => {
       const s = SETTINGS.folders[f.name] || { inApp: true, inSearch: true };
       const rm = UP === 'update' && !s.inApp && folderInDB(f.name);
-      return `<div class="frow"><div class="fn"><div style="font-size:15px;font-weight:500;line-height:1.25;overflow-wrap:anywhere">${esc(f.name)}</div><div class="small mu">${fmtN(f.count)} ${f.count === 1 ? 'record' : 'records'}</div>${rm ? '<div class="rm">Removed from the app on update</div>' : ''}${UP === 'update' && NEWF.indexOf(f.name) >= 0 ? '<div class="rm" style="color:var(--gr)">New folder</div>' : ''}</div><label class="cbx a"><input type="checkbox" data-fi="${i}" data-k="app" ${s.inApp ? 'checked' : ''} aria-label="${esc(f.name)}: include in app"></label><label class="cbx s"><input type="checkbox" data-fi="${i}" data-k="search" ${s.inApp && s.inSearch ? 'checked' : ''} ${s.inApp ? '' : 'disabled'} aria-label="${esc(f.name)}: include in search"></label></div>`;
+      return `<div class="frow"><div class="fn"><div style="font-size:15px;font-weight:500;line-height:1.25;overflow-wrap:anywhere">${esc(f.name)}</div><div class="small mu">${fmtN(f.count)} ${f.count === 1 ? 'record' : 'records'}</div>${rm ? '<div class="rm">Removed from the app on update</div>' : ''}${UP === 'update' && NEWF.indexOf(f.name) >= 0 ? '<div class="rm" style="color:var(--gr)">New</div>' : ''}</div><label class="cbx a"><input type="checkbox" data-fi="${i}" data-k="app" ${s.inApp ? 'checked' : ''} aria-label="${esc(f.name)}: include in app"></label><label class="cbx s"><input type="checkbox" data-fi="${i}" data-k="search" ${s.inApp && s.inSearch ? 'checked' : ''} ${s.inApp ? '' : 'disabled'} aria-label="${esc(f.name)}: include in search"></label></div>`;
     }).join('')}</div>`;
   }
   const hasSrc = !!(col || want), online = navigator.onLine !== false;
