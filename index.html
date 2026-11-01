@@ -13,7 +13,7 @@
 <link rel="icon" href="icon-192.png">
 <title>Vinyl Collection</title>
 <style>
-:root{--bg:#14120F;--s1:#1E1B17;--s2:#26221D;--line:#2B2721;--bd:#3A342C;--tx:#F3EEE6;--tx2:#D8D1C6;--mu:#A9A196;--gr:#86E39A;--am:#FFC15E;--ye:#FFE45C;--bl:#6DB8FF;--rd:#FF9A9A;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
+:root{--bg:#14120F;--s1:#1E1B17;--s2:#26221D;--line:#2B2721;--bd:#3A342C;--tx:#F3EEE6;--tx2:#D8D1C6;--mu:#A9A196;--gr:#86E39A;--cy:#7CCBFF;--am:#FFC15E;--ye:#FFE45C;--bl:#6DB8FF;--rd:#FF9A9A;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:var(--font);-webkit-text-size-adjust:100%}
@@ -65,10 +65,16 @@ details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14
 #q::placeholder{color:var(--mu)}
 .clear{position:absolute;right:4px;width:44px;height:44px;border:0;border-radius:22px;background:transparent;color:var(--mu);display:flex;align-items:center;justify-content:center}
 .modes{display:flex;gap:6px;align-items:stretch}
-.mode{flex:1;min-width:0;height:44px;border-radius:12px;border:1.5px solid;background:transparent;font-weight:600;font-size:13px;padding:0 2px}
-.mode.col{border-color:var(--gr);color:var(--gr)}.mode.col.on{background:var(--gr);color:#0F1A12}
+.mode{flex:1;min-width:0;height:44px;border-radius:12px;border:1.5px solid;background:transparent;font-weight:600;font-size:12px;padding:0 2px}
+.mode.col{border-color:var(--cy);color:var(--cy)}.mode.col.on{background:var(--cy);color:#0A1A26}
 .mode.want{border-color:var(--am);color:var(--am)}.mode.want.on{background:var(--am);color:#1F1606}
 .mode.both{border-color:var(--tx);color:var(--tx)}.mode.both.on{background:var(--tx);color:#14120F}
+.sbs{display:flex;gap:6px;flex:none;margin-left:6px}
+.sb{flex:none;width:38px;height:44px;border-radius:12px;border:1.5px solid;background:transparent;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.sb.d{border-color:var(--ye);color:var(--ye)}.sb.s{border-color:var(--gr);color:var(--gr)}.sb.y{border-color:var(--rd);color:var(--rd)}
+.tm{display:flex;gap:8px;margin:2px 0 4px 19px}
+.tm .sb{width:44px;height:36px;border-radius:10px;font-size:14px}
+.tk[data-trk]{cursor:pointer;border-radius:6px}.tk.sel{color:var(--tx)}
 .dbtn{flex:none;width:84px;height:44px;margin-left:8px;border-radius:12px;border:1.5px solid var(--ye);color:var(--ye);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px}
 .hint{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:500;color:var(--mu);min-height:16px}
 .resultswrap{flex:1;min-height:0;overflow-y:auto;padding-top:8px !important;-webkit-overflow-scrolling:touch;padding:0 16px 24px;display:flex;flex-direction:column;gap:12px}
@@ -164,9 +170,11 @@ details.chk summary{min-height:48px;display:flex;align-items:center;font-size:14
         <button class="mode col" data-mode="collection" aria-pressed="false">Collection</button>
         <button class="mode want" data-mode="wantlist" aria-pressed="false">Wantlist</button>
         <button class="mode both" data-mode="both" aria-pressed="true">Both</button>
-        <a id="discogs" class="dbtn" href="https://www.discogs.com/search/" target="_blank" rel="noopener" aria-label="Search on Discogs">Discogs
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg>
-        </a>
+        <div class="sbs">
+          <a id="lk-d" class="sb d" href="https://www.discogs.com/search/" target="_blank" rel="noopener" aria-label="Search on Discogs">D</a>
+          <a id="lk-s" class="sb s" href="https://open.spotify.com/search/" target="_blank" rel="noopener" aria-label="Search on Spotify">S</a>
+          <a id="lk-y" class="sb y" href="https://www.youtube.com/results" target="_blank" rel="noopener" aria-label="Search on YouTube">Y</a>
+        </div>
       </div>
       <div class="hint"><span id="count"></span><span id="fhint"></span></div>
     </div>
@@ -265,7 +273,7 @@ const fmtN = (n) => Number(n).toLocaleString('en-US');
 const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FAST = /[?&]fast\b/.test(location.search);
-const VERSION = 'v1.11';
+const VERSION = 'v1.12';
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
@@ -368,7 +376,7 @@ const SHOW_RELEASE = { album: 1, comp: 1, cd: 1, other: 1 };
 
 /* ---------- icons ---------- */
 const BG = '#1E1B17';
-const ICOL = { collection: '#86E39A', want: '#FFC15E', both: '#86E39A', plain: '#F3EEE6' };
+const ICOL = { collection: '#7CCBFF', want: '#FFC15E', both: '#7CCBFF', plain: '#F3EEE6' };
 function iconHTML(kind, state, px) {
   const c = ICOL[state] || ICOL.plain, filled = state === 'collection' || state === 'both';
   const fl = filled ? c : BG, dt = filled ? BG : c;
@@ -427,7 +435,7 @@ let META = { lastImport: 0 };
 let TOKEN = lsGet('dtoken', '');
 let SW_READY = false;
 let busy = false;
-const S = { q: '', mode: lsGet('mode', 'both'), includeInactive: false, view: 'search', open: new Set() };
+const S = { q: '', mode: lsGet('mode', 'both'), includeInactive: false, view: 'search', open: new Set(), menu: '' };
 let UP = 'new', SET_BAK = null, importArmed = false, NEWF = [], GONE = [];
 const srcFor = (t) => PICK[t] || (UP === 'update' ? SRC[t] : null);
 const F = { state: 'idle', msg: '', recent: [], loop: false, errs: 0, wake: null };
@@ -546,7 +554,7 @@ function runSearch(tokens) {
     if (rows[0].t) {
       const mset = new Set(rel ? [] : rows.map((m) => m.ti));
       if (rel) r.tracks.forEach((t, i) => { if (tokens.every((tk) => tokOk(tk, t.h, t.w, fuzzy))) mset.add(i); });
-      tracks = r.tracks.map((t, i) => ({ t: t.t, who: /^various/i.test(r.artist) && t.a ? t.a : '', m: mset.has(i) }));
+      tracks = r.tracks.map((t, i) => ({ ix: i, q: ((t.a || (/^various/i.test(r.artist) ? '' : r.artist.replace(/\s*\(\d+\)\s*$/, ''))) + ' ' + t.t).trim(), t: t.t, who: /^various/i.test(r.artist) && t.a ? t.a : '', m: mset.has(i) }));
     }
     const mode = rel ? (FIXED[r.kind] ? 'fixed' : 'rel') : 'hit';
     const nameEq = (x) => normFull(String(x || '').replace(/\s*\(\d+\)\s*$/, '')) === qn;
@@ -592,11 +600,18 @@ const LEGEND_KINDS = [['single', 'Single', '7 inch'], ['maxi', 'Maxi-single', '1
 function helpHTML() {
   return `<div class="card" style="margin-bottom:16px"><div class="lab">SEARCH</div><div class="small" style="color:var(--tx2)">Type any part of an artist, title or track. Small typing mistakes are forgiven. Results are found offline.</div></div><div class="card"><div class="lab">LIST</div><div class="legendgrid3">${LEGEND_STATES.map((s) => `<div>${iconHTML('album', s[0], 30)}<div class="lt" style="font-size:13px">${s[1]}</div><div class="ls">${s[2]}</div></div>`).join('')}</div><div class="lab">TYPE</div><div class="legendgrid2">${LEGEND_KINDS.map((k) => `<div>${iconHTML(k[0], 'plain', 28)}<div style="min-width:0"><div class="lt">${k[1]}</div><div class="ls">${k[2]}</div></div></div>`).join('')}</div><div class="small mu">Tap an icon in a result to open that release on Discogs.</div></div>`;
 }
+const enc = encodeURIComponent;
+const linkD = (q) => 'https://www.discogs.com/search/?q=' + enc(q) + '&type=all';
+const linkS = (q) => 'https://open.spotify.com/search/' + enc(q);
+const linkY = (q) => 'https://www.youtube.com/results?search_query=' + enc(q);
+function extBtns(q, cls) {
+  return `<a class="sb d" href="${esc(linkD(q))}" target="_blank" rel="noopener" aria-label="Search on Discogs: ${esc(q)}">D</a><a class="sb s" href="${esc(linkS(q))}" target="_blank" rel="noopener" aria-label="Search on Spotify: ${esc(q)}">S</a><a class="sb y" href="${esc(linkY(q))}" target="_blank" rel="noopener" aria-label="Search on YouTube: ${esc(q)}">Y</a>`;
+}
 function rowHTML(g) {
   const open = S.open.has(g.id), all = g.tracks, n = all.length;
   const matched = all.filter((t) => t.m);
   const vis = (open || g.mode === 'fixed') ? all : (g.mode === 'rel' ? matched : matched.slice(0, 4));
-  const tl = vis.length ? `<div class="tl">${vis.map((t) => `<div class="tk${open && g.mode !== 'fixed' && t.m ? ' hit' : ''}">${NOTE_SVG}<div>${esc(t.t)}${t.who ? ` <span class="ta">\u2013 ${esc(t.who)}</span>` : ''}</div></div>`).join('')}</div>` : '';
+  const tl = vis.length ? `<div class="tl">${vis.map((t) => { const key = g.id + ':' + t.ix, sel = S.menu === key; return `<div class="tk${open && g.mode !== 'fixed' && t.m ? ' hit' : ''}${sel ? ' sel' : ''}" data-trk="${key}" role="button" aria-expanded="${sel}">${NOTE_SVG}<div>${esc(t.t)}${t.who ? ` <span class="ta">\u2013 ${esc(t.who)}</span>` : ''}</div></div>${sel ? `<div class="tm">${extBtns(t.q)}</div>` : ''}`; }).join('')}</div>` : '';
   let tog = '';
   if (g.mode !== 'fixed' && (open || n > vis.length)) tog = `<button class="tog" data-open="${g.id}" aria-expanded="${open}">${open ? 'Show less \u25B4' : (vis.length === 0 ? n + (n === 1 ? ' track' : ' tracks') : 'All ' + n + ' tracks') + ' \u25BE'}</button>`;
   return `<div class="row"><div class="rb"><div class="t clamp2">${esc(g.title)}</div><div class="r2 clamp2">${esc(g.artist)}</div>${tl}${tog}${g.note ? `<div class="note clamp2">Note: ${esc(g.note)}</div>` : ''}</div><a class="ic" href="${esc(g.url)}" target="_blank" rel="noopener" aria-label="${esc(g.aria)}">${iconHTML(g.kind, g.state, 30)}</a></div>`;
@@ -613,7 +628,10 @@ function renderSearch() {
   $('#ver').textContent = VERSION;
   $('#clear').hidden = S.q.length === 0;
   $$('.mode').forEach((b) => { const on = b.dataset.mode === S.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-  $('#discogs').href = tokens.length ? 'https://www.discogs.com/search/?q=' + encodeURIComponent(S.q.trim()) + '&type=all' : 'https://www.discogs.com/search/';
+  const qq = S.q.trim();
+  $('#lk-d').href = tokens.length ? linkD(qq) : 'https://www.discogs.com/search/';
+  $('#lk-s').href = tokens.length ? linkS(qq) : 'https://open.spotify.com/search/';
+  $('#lk-y').href = tokens.length ? linkY(qq) : 'https://www.youtube.com/results';
   const fs = folderStats();
   $('#fhint').textContent = S.mode === 'wantlist' ? 'Wantlist has no folders' : (fs.total ? (S.includeInactive ? 'Searching all ' + fs.app + ' folders' : 'Searching ' + fs.search + ' of ' + fs.app + ' folders') : '');
   let html = '';
@@ -644,7 +662,7 @@ function renderSearch() {
       flush();
       if (n > 80) html += `<div class="small mu center">Showing the first 80 of ${fmtN(n)} records. Type more to narrow it down.</div>`;
     } else {
-      html += `<div class="empty"><h2>No hits</h2><div class="small mu">Nothing in the active folders or the Wantlist for this search.</div><a class="ybtn" href="${esc($('#discogs').href)}" target="_blank" rel="noopener">Search on Discogs ${EXT}</a></div>`;
+      html += `<div class="empty"><h2>No hits</h2><div class="small mu">Nothing in the active folders or the Wantlist for this search.</div><div class="small mu" style="margin-top:4px">Search elsewhere</div><div class="tm" style="margin:0">${extBtns(qq)}</div></div>`;
     }
   }
   const keep = $('#results').scrollTop;
@@ -862,19 +880,22 @@ function renderAll() {
 /* ---------- events ---------- */
 let qTimer = null, rTimer = null;
 $('#q').addEventListener('input', (e) => {
-  S.q = e.target.value; S.includeInactive = false; S.open = new Set();
+  S.q = e.target.value; S.includeInactive = false; S.open = new Set(); S.menu = '';
   renderSearch();
   clearTimeout(rTimer); rTimer = setTimeout(() => pushRecent(S.q), 2000);
 });
 $('#clear').addEventListener('click', () => { S.q = ''; $('#q').value = ''; renderSearch(); $('#q').focus(); });
 $('#b-legend').addEventListener('click', () => go('help'));
 $('#b-understood').addEventListener('click', () => go('search'));
-$$('.mode').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; lsSet('mode', S.mode); S.includeInactive = false; S.open = new Set(); renderSearch(); }));
+$$('.mode').forEach((b) => b.addEventListener('click', () => { S.mode = b.dataset.mode; lsSet('mode', S.mode); S.includeInactive = false; S.open = new Set(); S.menu = ''; renderSearch(); }));
 document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]');
   if (g) { e.preventDefault(); go(g.dataset.go); return; }
   const c = e.target.closest('[data-chip]');
   if (c) { S.q = c.dataset.chip; $('#q').value = S.q; renderSearch(); return; }
+  if (e.target.closest('.tm')) return;
+  const tk = e.target.closest('[data-trk]');
+  if (tk) { S.menu = S.menu === tk.dataset.trk ? '' : tk.dataset.trk; renderSearch(); return; }
   const op = e.target.closest('[data-open]');
   if (op) { const id = +op.dataset.open; if (S.open.has(id)) S.open.delete(id); else S.open.add(id); renderSearch(); return; }
   const up = e.target.closest('[data-up]');
